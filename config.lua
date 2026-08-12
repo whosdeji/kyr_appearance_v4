@@ -98,16 +98,20 @@ Config.ClothingProps = {
     { id = 7, label = 'Bracelet' },
 }
 
--- Paste output from /saveoutfit here
+-- Paste output from /saveoutfit here.
+-- Preferred (stable) format uses collection + local drawable:
+--   [11] = { collection = "mp_m_freemode_01_mp_m_yourpack", drawable = 12, texture = 0 },
+-- Legacy format still works but WILL shift when you add new streamed EUP:
+--   [11] = { drawable = 548, texture = 0 },
 Config.ClothingPresets = {
-    -- Example (delete or keep):
+    -- Example (collection-stable):
     -- ['default_male'] = {
     --     components = {
-    --         [3]  = { drawable = 15, texture = 0 },
-    --         [4]  = { drawable = 21, texture = 0 },
-    --         [6]  = { drawable = 34, texture = 0 },
-    --         [8]  = { drawable = 15, texture = 0 },
-    --         [11] = { drawable = 15, texture = 0 },
+    --         [3]  = { collection = "", drawable = 15, texture = 0 },
+    --         [4]  = { collection = "", drawable = 21, texture = 0 },
+    --         [6]  = { collection = "", drawable = 34, texture = 0 },
+    --         [8]  = { collection = "", drawable = 15, texture = 0 },
+    --         [11] = { collection = "", drawable = 15, texture = 0 },
     --     },
     --     props = {}
     -- },
@@ -171,6 +175,8 @@ Config.Factions = {
             [7] = { min = -1, max = 50 },
         },
         presets = {
+            -- Legacy global indexes below still apply, but re-run /saveoutfit
+            -- while wearing the outfit to convert to collection-stable form.
             ['usarmy_base'] = {
                 components = {
                     [1] = { drawable = 0, texture = 0 },
