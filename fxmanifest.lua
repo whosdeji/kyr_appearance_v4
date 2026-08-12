@@ -4,8 +4,8 @@ lua54 'yes'
 
 name 'kyr_appearance'
 author 'Kyrell'
-description 'mp_freemode appearance creator (post ox_core character creation) - excludes clothing'
-version '1.0.0'
+description 'mp_freemode appearance creator (post ox_core) with collection-stable clothing presets'
+version '1.1.0'
 
 shared_scripts {
     '@ox_lib/init.lua',
