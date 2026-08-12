@@ -69,56 +69,173 @@ function ApplyEyeColor(ped, colorId)
     currentAppearance.eyeColor = colorId
 end
 
-function ApplyComponent(ped, componentId, drawable, texture)
+--- Apply a component using collection + local index when available.
+--- Falls back to global drawable for legacy presets that only store `drawable`.
+---
+--- Accepts either:
+---   ApplyComponent(ped, id, { collection = "...", drawable = localIdx, texture = n })
+---   ApplyComponent(ped, id, globalDrawable, texture)   -- legacy
+function ApplyComponent(ped, componentId, drawableOrData, texture)
     componentId = tonumber(componentId)
-    drawable = tonumber(drawable) or 0
-    texture = tonumber(texture) or 0
+    if not componentId then return end
 
-    SetPedComponentVariation(ped, componentId, drawable, texture, 0)
+    local collection, localDrawable, tex, globalDrawable
+
+    if type(drawableOrData) == 'table' then
+        collection = drawableOrData.collection
+        tex        = tonumber(drawableOrData.texture) or 0
+        -- Prefer explicit localDrawable; else treat drawable as local when collection present,
+        -- otherwise as global (legacy / NUI).
+        if drawableOrData.localDrawable ~= nil then
+            localDrawable = tonumber(drawableOrData.localDrawable)
+        elseif collection and collection ~= '' then
+            localDrawable = tonumber(drawableOrData.drawable)
+        else
+            globalDrawable = tonumber(drawableOrData.drawable) or 0
+            localDrawable  = globalDrawable
+        end
+    else
+        globalDrawable = tonumber(drawableOrData) or 0
+        localDrawable  = globalDrawable
+        tex            = tonumber(texture) or 0
+        collection     = nil
+    end
+
+    if collection and collection ~= '' and localDrawable ~= nil then
+        -- Stable path: collection-local index does not shift when new packs are added
+        SetPedCollectionComponentVariation(ped, componentId, collection, localDrawable, tex, 0)
+        globalDrawable = GetPedDrawableVariation(ped, componentId)
+    else
+        -- Global path (NUI browsing or legacy presets)
+        SetPedComponentVariation(ped, componentId, localDrawable or 0, tex, 0)
+        globalDrawable = localDrawable or 0
+        local ok, col = pcall(GetPedDrawableVariationCollectionName, ped, componentId)
+        local ok2, loc = pcall(GetPedDrawableVariationCollectionLocalIndex, ped, componentId)
+        if ok and ok2 and col then
+            collection = col
+            localDrawable = loc
+        end
+    end
 
     currentAppearance.components = currentAppearance.components or {}
     currentAppearance.components[tostring(componentId)] = {
-        drawable = drawable,
-        texture = texture
+        drawable      = globalDrawable,          -- UI / legacy global
+        texture       = tex,
+        collection    = collection or '',
+        localDrawable = localDrawable or globalDrawable or 0,
     }
 end
 
-function ApplyProp(ped, propId, drawable, texture)
+function ApplyProp(ped, propId, drawableOrData, texture)
     propId = tonumber(propId)
-    drawable = tonumber(drawable)
-    texture = tonumber(texture) or 0
+    if not propId then return end
 
-    if not drawable or drawable < 0 then
-        ClearPedProp(ped, propId)
-        drawable = -1
+    local collection, localDrawable, tex, globalDrawable
+
+    if type(drawableOrData) == 'table' then
+        collection = drawableOrData.collection
+        tex        = tonumber(drawableOrData.texture) or 0
+        if drawableOrData.localDrawable ~= nil then
+            localDrawable = tonumber(drawableOrData.localDrawable)
+        elseif collection and collection ~= '' then
+            localDrawable = tonumber(drawableOrData.drawable)
+        else
+            globalDrawable = tonumber(drawableOrData.drawable)
+            localDrawable  = globalDrawable
+        end
     else
-        SetPedPropIndex(ped, propId, drawable, texture, true)
+        globalDrawable = tonumber(drawableOrData)
+        localDrawable  = globalDrawable
+        tex            = tonumber(texture) or 0
+        collection     = nil
+    end
+
+    if not localDrawable or localDrawable < 0 then
+        ClearPedProp(ped, propId)
+        collection = ''
+        localDrawable = -1
+        globalDrawable = -1
+        tex = 0
+    elseif collection and collection ~= '' then
+        SetPedCollectionPropIndex(ped, propId, collection, localDrawable, tex, true)
+        globalDrawable = GetPedPropIndex(ped, propId)
+    else
+        SetPedPropIndex(ped, propId, localDrawable, tex, true)
+        globalDrawable = localDrawable
+        local ok, col = pcall(GetPedPropCollectionName, ped, propId)
+        local ok2, loc = pcall(GetPedPropCollectionLocalIndex, ped, propId)
+        if ok and ok2 and col then
+            collection = col
+            localDrawable = loc
+        end
     end
 
     currentAppearance.props = currentAppearance.props or {}
     currentAppearance.props[tostring(propId)] = {
-        drawable = drawable,
-        texture = texture
+        drawable      = globalDrawable,
+        texture       = tex,
+        collection    = collection or '',
+        localDrawable = localDrawable or -1,
     }
 end
 
+--- Capture clothing.
+---
+--- Persistence fields (stable across EUP additions):
+---   collection, localDrawable, texture
+---
+--- UI fields (linear global space the NUI sliders expect):
+---   drawable = current global index
 function GetCurrentClothing(ped)
     ped = ped or PlayerPedId()
 
     local components = {}
     for _, c in ipairs(Config.ClothingComponents) do
+        local globalDrawable = GetPedDrawableVariation(ped, c.id)
+        local texture = GetPedTextureVariation(ped, c.id)
+
+        local collection, localDrawable = '', globalDrawable
+        local ok, col = pcall(GetPedDrawableVariationCollectionName, ped, c.id)
+        local ok2, loc = pcall(GetPedDrawableVariationCollectionLocalIndex, ped, c.id)
+        if ok and ok2 and col then
+            collection = col
+            localDrawable = loc
+        end
+
         components[tostring(c.id)] = {
-            drawable = GetPedDrawableVariation(ped, c.id),
-            texture  = GetPedTextureVariation(ped, c.id)
+            -- UI / legacy
+            drawable = globalDrawable,
+            texture  = texture,
+            -- Stable identity for DB + config presets
+            collection    = collection,
+            localDrawable = localDrawable,
         }
     end
 
     local props = {}
     for _, p in ipairs(Config.ClothingProps) do
-        local drawable = GetPedPropIndex(ped, p.id)
+        local globalDrawable = GetPedPropIndex(ped, p.id)
+        local texture = 0
+        local collection, localDrawable = '', globalDrawable
+
+        if globalDrawable >= 0 then
+            texture = GetPedPropTextureIndex(ped, p.id)
+            local ok, col = pcall(GetPedPropCollectionName, ped, p.id)
+            local ok2, loc = pcall(GetPedPropCollectionLocalIndex, ped, p.id)
+            if ok and ok2 and col then
+                collection = col
+                localDrawable = loc
+            end
+        else
+            localDrawable = -1
+            collection = ''
+        end
+
         props[tostring(p.id)] = {
-            drawable = drawable,
-            texture  = drawable >= 0 and GetPedPropTextureIndex(ped, p.id) or 0
+            drawable = globalDrawable,
+            texture  = texture,
+            collection    = collection,
+            localDrawable = localDrawable,
         }
     end
 
@@ -130,13 +247,14 @@ function ApplyClothing(ped, data)
 
     if data.components then
         for id, v in pairs(data.components) do
-            ApplyComponent(ped, id, v.drawable, v.texture)
+            -- Pass whole table so collection is used when present
+            ApplyComponent(ped, id, v)
         end
     end
 
     if data.props then
         for id, v in pairs(data.props) do
-            ApplyProp(ped, id, v.drawable, v.texture)
+            ApplyProp(ped, id, v)
         end
     end
 end
@@ -234,7 +352,7 @@ end
 function GetCurrentAppearance()
     local ped = PlayerPedId()
 
-    -- Clothing from live ped
+    -- Clothing from live ped (collection-stable)
     local clothing = GetCurrentClothing(ped)
     currentAppearance.components = clothing.components
     currentAppearance.props = clothing.props
@@ -262,7 +380,6 @@ function GetCurrentAppearance()
         if lastFullAppearance.overlays then
             currentAppearance.overlays = lastFullAppearance.overlays
         end
-        -- If hair somehow missing
         if not currentAppearance.hair and lastFullAppearance.hair then
             currentAppearance.hair = lastFullAppearance.hair
         end
