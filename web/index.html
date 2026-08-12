@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Characterisation</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app" class="hidden">
+
+    <div id="viewport-controls">
+        <button id="rotate-left" class="cam-btn" title="Rotate left">&#8634;</button>
+        <button id="zoom-in" class="cam-btn" title="Zoom in">+</button>
+        <button id="zoom-out" class="cam-btn" title="Zoom out">-</button>
+        <button id="rotate-right" class="cam-btn" title="Rotate right">&#8635;</button>
+
+        <button class="cam-btn cam-focus" data-focus="head" title="Head">H</button>
+        <button class="cam-btn cam-focus" data-focus="body" title="Body">B</button>
+        <button class="cam-btn cam-focus" data-focus="legs" title="Legs">L</button>
+        <button class="cam-btn cam-focus" data-focus="feet" title="Feet">F</button>
+
+        <button id="btn-randomize" class="cam-btn" title="Randomize look" style="width:auto; padding:0 12px; font-size:13px;">🎲</button>
+    </div>
+
+    <div id="panel">
+        <div id="panel-header">
+            <span>CHARACTERISATION</span>
+        </div>
+
+        <div id="tabs">
+            <button class="tab-btn active" data-tab="heritage">Heritage</button>
+            <button class="tab-btn" data-tab="face">Face</button>
+            <button class="tab-btn" data-tab="hair">Hair &amp; Eyes</button>
+            <button class="tab-btn" data-tab="overlays">Overlays</button>
+            <button class="tab-btn" data-tab="clothing">Clothing</button>
+            <button class="tab-btn" data-tab="presets">Presets</button>
+        </div>
+
+        <div id="tab-content">
+
+            <!-- Heritage -->
+            <div class="tab-pane active" id="tab-heritage">
+                <div class="section-label">Parents</div>
+                <div class="slider-row" data-field="shapeFirst"><label>Mother (Shape)</label><input type="range" min="0" step="1"><span class="val"></span></div>
+                <div class="slider-row" data-field="shapeSecond"><label>Father (Shape)</label><input type="range" min="0" step="1"><span class="val"></span></div>
+                <div class="slider-row" data-field="shapeMix"><label>Shape Blend</label><input type="range" min="0" max="1" step="0.01"><span class="val"></span></div>
+                <div class="slider-row" data-field="skinFirst"><label>Mother (Skin)</label><input type="range" min="0" step="1"><span class="val"></span></div>
+                <div class="slider-row" data-field="skinSecond"><label>Father (Skin)</label><input type="range" min="0" step="1"><span class="val"></span></div>
+                <div class="slider-row" data-field="skinMix"><label>Skin Blend</label><input type="range" min="0" max="1" step="0.01"><span class="val"></span></div>
+            </div>
+
+            <!-- Face -->
+            <div class="tab-pane" id="tab-face">
+                <!-- face feature sliders injected here -->
+            </div>
+
+            <!-- Hair & Eyes -->
+            <div class="tab-pane" id="tab-hair">
+                <div class="section-label">Hair</div>
+                <div class="slider-row" data-field="hairStyle"><label>Style</label><input type="range" min="0" max="73" step="1"><span class="val"></span></div>
+                <div class="slider-row" data-field="hairColor"><label>Colour</label><input type="range" min="0" max="63" step="1"><span class="val"></span></div>
+                <div class="slider-row" data-field="hairHighlight"><label>Highlight</label><input type="range" min="0" max="63" step="1"><span class="val"></span></div>
+
+                <div class="section-label">Eyes</div>
+                <div class="slider-row" data-field="eyeColor"><label>Colour</label><input type="range" min="0" max="31" step="1"><span class="val"></span></div>
+            </div>
+
+            <!-- Overlays -->
+            <div class="tab-pane" id="tab-overlays">
+                <!-- head overlay controls injected here -->
+            </div>
+
+            <!-- Clothing -->
+            <div class="tab-pane" id="tab-clothing">
+                <div class="section-label">Components</div>
+                <div id="clothing-components"></div>
+
+                <div class="section-label" style="margin-top:1.2rem;">Props</div>
+                <div id="clothing-props"></div>
+            </div>
+
+            <!-- Presets -->
+            <div class="tab-pane" id="tab-presets">
+                <div class="section-label">Outfit Presets</div>
+                <div id="preset-list"></div>
+            </div>
+
+        </div>
+
+        <div id="panel-footer">
+            <button id="btn-cancel" class="footer-btn cancel hidden">Cancel</button>
+            <button id="btn-save" class="footer-btn save">Confirm</button>
+        </div>
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
