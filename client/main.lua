@@ -310,6 +310,8 @@ RegisterNUICallback('eyeColor', function(data, cb)
 end)
 
 RegisterNUICallback('component', function(data, cb)
+    -- NUI still sends global drawable for browsing; ApplyComponent will
+    -- resolve collection + local index after applying so saves stay stable.
     ApplyComponent(PlayerPedId(), data.id, data.drawable, data.texture)
     cb(1)
 end)
@@ -386,6 +388,8 @@ RegisterCommand('saveoutfit', function(_, args)
         local name = args[1] or 'unnamed_outfit'
         local clothing = GetCurrentClothing(PlayerPedId())
 
+        -- Dump collection-stable format so presets survive future EUP packs.
+        -- collection = .ymt collection name; drawable = LOCAL index inside that collection.
         local lines = {
             string.format("['%s'] = {", name),
             "    components = {",
@@ -394,9 +398,11 @@ RegisterCommand('saveoutfit', function(_, args)
         for _, c in ipairs(Config.ClothingComponents) do
             local v = clothing.components[tostring(c.id)]
             if v then
+                local col = v.collection or ''
+                local localIdx = v.localDrawable ~= nil and v.localDrawable or v.drawable or 0
                 lines[#lines + 1] = string.format(
-                    "        [%d] = { drawable = %d, texture = %d },  -- %s",
-                    c.id, v.drawable, v.texture, c.label
+                    "        [%d] = { collection = %q, drawable = %d, texture = %d },  -- %s (global %s)",
+                    c.id, col, localIdx, v.texture or 0, c.label, tostring(v.drawable)
                 )
             end
         end
@@ -407,9 +413,11 @@ RegisterCommand('saveoutfit', function(_, args)
         for _, p in ipairs(Config.ClothingProps) do
             local v = clothing.props[tostring(p.id)]
             if v then
+                local col = v.collection or ''
+                local localIdx = v.localDrawable ~= nil and v.localDrawable or v.drawable or -1
                 lines[#lines + 1] = string.format(
-                    "        [%d] = { drawable = %d, texture = %d },  -- %s",
-                    p.id, v.drawable, v.texture, p.label
+                    "        [%d] = { collection = %q, drawable = %d, texture = %d },  -- %s (global %s)",
+                    p.id, col, localIdx, v.texture or 0, p.label, tostring(v.drawable)
                 )
             end
         end
@@ -419,6 +427,7 @@ RegisterCommand('saveoutfit', function(_, args)
 
         local output = table.concat(lines, "\n")
         print("^2===== PASTE THIS INTO THE CORRECT presets TABLE =====^0")
+        print("^3Uses collection + local drawable (stable across EUP updates)^0")
         print(output)
         print("^2====================================================^0")
 
@@ -426,7 +435,7 @@ RegisterCommand('saveoutfit', function(_, args)
 
         lib.notify({
             title = 'Save Outfit',
-            description = 'Preset dumped to F8 + clipboard.',
+            description = 'Collection-stable preset dumped to F8 + clipboard.',
             type = 'success'
         })
     end)
