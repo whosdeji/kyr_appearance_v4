@@ -6,6 +6,22 @@ local savedPosition = nil
 local currentMode = 'characterisation' -- 'characterisation' | 'locker'
 local currentFaction = nil
 
+local function preloadEditorArea(coords)
+    local x, y, z = coords.x, coords.y, coords.z
+
+    RequestCollisionAtCoord(x, y, z)
+    SetFocusPosAndVel(x, y, z, 0.0, 0.0, 0.0)
+    NewLoadSceneStart(x, y, z, x, y, z, 20.0, 0)
+
+    local timeout = GetGameTimer() + 3000
+    while not IsNewLoadSceneLoaded() and GetGameTimer() < timeout do
+        RequestCollisionAtCoord(x, y, z)
+        Wait(0)
+    end
+    NewLoadSceneStop()
+    ClearFocus()
+end
+
 local function freezeForEditor(ped, freeze)
     FreezeEntityPosition(ped, freeze)
     SetEntityInvincible(ped, freeze)
@@ -95,7 +111,6 @@ function OpenAppearanceMenu(isNewCharacter, staff, gender, options)
 
     local ped = PlayerPedId()
 
-    -- Remember position + appearance so we can revert on cancel
     if not isNewCharacter then
         savedPosition = getCurrentPosition(ped)
         previousAppearance = GetCurrentAppearance()
@@ -114,15 +129,17 @@ function OpenAppearanceMenu(isNewCharacter, staff, gender, options)
         })
     end
 
-    -- Future: per-faction editor rooms
-    -- local editor = Config.EditorCoords
-    -- if currentFaction and Config.Factions[currentFaction] and Config.Factions[currentFaction].editorCoords then
-    --     editor = Config.Factions[currentFaction].editorCoords
-    -- end
     local editor = Config.EditorCoords
 
+    DoScreenFadeOut(0)             -- hide the teleport/streaming gap immediately
+
     teleportTo(ped, editor)
+    preloadEditorArea(editor)      -- actually stream the underground room in
     freezeForEditor(ped, true)
+
+    Wait(0)                        -- let the skeleton catch up to the teleport
+    ped = PlayerPedId()
+
     CreateAppearanceCam(ped)
 
     SetNuiFocus(true, true)
@@ -130,10 +147,16 @@ function OpenAppearanceMenu(isNewCharacter, staff, gender, options)
         action = 'open',
         data = buildNuiPayload(options)
     })
+
+    DoScreenFadeIn(300)
 end
 
 local function closeAppearanceMenu()
     local ped = PlayerPedId()
+    local wasNewCharacter = newCharacterMode
+
+    DoScreenFadeOut(150)
+    while not IsScreenFadedOut() do Wait(0) end
 
     DestroyAppearanceCam()
     freezeForEditor(ped, false)
@@ -154,6 +177,14 @@ local function closeAppearanceMenu()
     currentMode = 'characterisation'
     currentFaction = nil
     ClearLockerFaction()
+
+    -- Brand-new characters get faded back in by kyr_spawn once it finishes
+    -- positioning them (see the kyr_appearance:characterReady handler we
+    -- added earlier) — don't fade in twice here.
+    if not wasNewCharacter then
+        Wait(200)
+        DoScreenFadeIn(500)
+    end
 end
 
 -- ox_core character load
@@ -172,7 +203,12 @@ RegisterNetEvent('ox:setActiveCharacter', function(character, groups)
         end
 
         lib.callback('kyr_appearance:getAppearance', false, function(data)
-            if not data then return end
+            if not data then
+                -- No saved appearance despite completed=1 (edge case) — nothing to
+                -- apply, but kyr_spawn still needs to know it's safe to fade in.
+                TriggerEvent('kyr_appearance:characterReady', character, groups)
+                return
+            end
 
             CreateThread(function()
                 local model = data.model
@@ -182,7 +218,6 @@ RegisterNetEvent('ox:setActiveCharacter', function(character, groups)
 
                 ApplyModel(model)
 
-                -- Wait until freemode is actually ready before applying face/clothes
                 local ped = PlayerPedId()
                 local timeout = GetGameTimer() + 2500
                 while not HasCollisionLoadedAroundEntity(ped) and GetGameTimer() < timeout do
@@ -192,6 +227,8 @@ RegisterNetEvent('ox:setActiveCharacter', function(character, groups)
                 Wait(300)
 
                 ApplyFullAppearance(PlayerPedId(), data)
+
+                TriggerEvent('kyr_appearance:characterReady', character, groups)
             end)
         end)
     end)
@@ -309,9 +346,14 @@ RegisterNUICallback('applyPreset', function(data, cb)
 end)
 
 RegisterNUICallback('save', function(data, cb)
+    local wasNewCharacter = newCharacterMode
     TriggerServerEvent('kyr_appearance:save', GetCurrentAppearance())
     closeAppearanceMenu()
     cb(1)
+
+    if wasNewCharacter then
+        TriggerEvent('kyr_appearance:characterReady')
+    end
 end)
 
 RegisterNUICallback('cancel', function(data, cb)
