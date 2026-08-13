@@ -98,49 +98,12 @@ Config.ClothingProps = {
     { id = 7, label = 'Bracelet' },
 }
 
--- Display names keyed by STABLE identity: collection + local drawable (NOT global index).
--- Empty collection "" = base game collection.
---
--- Structure:
---   components[componentId][collectionName][localDrawable] = "Display Name"
---   props[propId][collectionName][localDrawable] = "Display Name"
---
--- Example:
--- Config.ClothingNames = {
---     components = {
---         [11] = {
---             ['mp_m_freemode_01_mp_m_usmc'] = {
---                 [0] = 'USMC Frogman [Wood Untucked]',
---                 [1] = 'USMC Frogman [Desert Untucked]',
---             },
---             [''] = { -- base game
---                 [15] = 'Default Tee',
---             },
---         },
---     },
---     props = {
---         [0] = {
---             ['mp_m_freemode_01_p_usarmy'] = {
---                 [3] = 'US Army MICH Helmet V2',
---             },
---         },
---     },
--- }
+-- Optional global / characterisation catalog (usually leave empty).
+-- Locker menus use Config.Factions[faction].clothingNames instead.
+-- Format: components[slot][collection][localDrawable] = "Display Name"
 Config.ClothingNames = {
-    components = {
-        -- [11] = {
-        --     ['your_collection_name'] = {
-        --         [0] = 'USMC Frogman [Wood Untucked]',
-        --     },
-        -- },
-    },
-    props = {
-        -- [0] = {
-        --     ['your_prop_collection'] = {
-        --         [0] = 'US Army MICH Helmet V2',
-        --     },
-        -- },
-    },
+    components = {},
+    props = {},
 }
 
 -- Paste output from /saveoutfit here.
@@ -190,6 +153,54 @@ Config.Factions = {
             [6] = { min = -1, max = 50 },   -- Watch
             [7] = { min = -1, max = 50 },   -- Bracelet
         },
+        -- Locker Clothing tab: only these named items (collection + local drawable)
+        -- collection string must match /saveoutfit dump exactly (e.g. 'r4usarmyc3')
+        clothingNames = {
+            components = {
+                -- [1]  = { -- Mask
+                --     ['r4usarmyc3'] = {
+                --         [0] = 'Example Mask',
+                --     },
+                -- },
+                -- [3]  = { -- Arms / Torso
+                -- },
+                -- [4]  = { -- Legs
+                -- },
+                -- [5]  = { -- Bag / Parachute
+                -- },
+                -- [6]  = { -- Shoes
+                -- },
+                -- [7]  = { -- Accessories
+                -- },
+                -- [8]  = { -- Undershirt
+                -- },
+                -- [9]  = { -- Body Armor
+                -- },
+                -- [10] = { -- Decals
+                -- },
+                -- [11] = { -- Top / Jacket
+                --     ['r4usarmyc3'] = {
+                --         [0] = 'USMC Frogman [Wood Untucked]',
+                --         [1] = 'USMC Frogman [Desert Untucked]',
+                --     },
+                -- },
+            },
+            props = {
+                -- [0] = { -- Hat
+                --     ['r4usarmyc3'] = {
+                --         [0] = 'USMC Cap',
+                --     },
+                -- },
+                -- [1] = { -- Glasses
+                -- },
+                -- [2] = { -- Ears
+                -- },
+                -- [6] = { -- Watch
+                -- },
+                -- [7] = { -- Bracelet
+                -- },
+            },
+        },
         presets = {
             -- paste /saveoutfit results here, e.g.:
             -- ['Recruit'] = { components = {...}, props = {...} },
@@ -218,6 +229,102 @@ Config.Factions = {
             [2] = { min = -1, max = 50 },
             [6] = { min = -1, max = 50 },
             [7] = { min = -1, max = 50 },
+        },
+        clothingNames = {
+            components = {
+                [1] = { -- Mask
+                    ['r4usarmyv3'] = {
+                        [0] = 'US Army Mask 0', [1] = 'US Army Mask 1',
+                    },
+                },
+                [3] = { -- Arms / Torso
+                    ['r4usarmyv3'] = {
+                        [0] = 'US Army Arms 0', [1] = 'US Army Arms 1',
+                    },
+                },
+                [4] = { -- Legs
+                    ['r4usarmyv3'] = {
+                        [0] = 'US Army Legs 0', [1] = 'US Army Legs 1', [2] = 'US Army Legs 2',
+                    },
+                },
+                [5] = { -- Bag / Parachute
+                    ['r4usarmyv3'] = {
+                        [0] = 'US Army Bag 0', [1] = 'US Army Bag 1', [2] = 'US Army Bag 2', [3] = 'US Army Bag 3',
+                        [4] = 'US Army Bag 4', [5] = 'US Army Bag 5', [6] = 'US Army Bag 6',
+                    },
+                },
+                [6] = { -- Shoes
+                    ['r4usarmyv3'] = {
+                        [0] = 'US Army Shoes 0',
+                    },
+                },
+                [7] = { -- Accessories
+                    ['r4usarmyv3'] = {
+                        [0] = 'US Army Acc 0', [1] = 'US Army Acc 1', [2] = 'US Army Acc 2', [3] = 'US Army Acc 3',
+                        [4] = 'US Army Acc 4', [5] = 'US Army Acc 5', [6] = 'US Army Acc 6', [7] = 'US Army Acc 7',
+                        [8] = 'US Army Acc 8', [9] = 'US Army Acc 9', [10] = 'US Army Acc 10',
+                    },
+                },
+                [8] = { -- Undershirt
+                    ['r4usarmyv3'] = {
+                        [0] = 'US Army Undershirt 0', [1] = 'US Army Undershirt 1', [2] = 'US Army Undershirt 2', [3] = 'US Army Undershirt 3',
+                        [4] = 'US Army Undershirt 4', [5] = 'US Army Undershirt 5', [6] = 'US Army Undershirt 6', [7] = 'US Army Undershirt 7',
+                        [8] = 'US Army Undershirt 8', [9] = 'US Army Undershirt 9', [10] = 'US Army Undershirt 10', [11] = 'US Army Undershirt 11',
+                        [12] = 'US Army Undershirt 12', [13] = 'US Army Undershirt 13',
+                    },
+                },
+                [9] = { -- Body Armor
+                    ['r4usarmyv3'] = {
+                        [0] = 'US Army Vest 0', [1] = 'US Army Vest 1', [2] = 'US Army Vest 2', [3] = 'US Army Vest 3',
+                        [4] = 'US Army Vest 4',
+                    },
+                },
+                [10] = { -- Decals
+                    ['r4usarmyv3'] = {
+                        [0] = 'US Army Decal 0', [1] = 'US Army Decal 1', [2] = 'US Army Decal 2', [3] = 'US Army Decal 3',
+                        [4] = 'US Army Decal 4', [5] = 'US Army Decal 5', [6] = 'US Army Decal 6', [7] = 'US Army Decal 7',
+                        [8] = 'US Army Decal 8', [9] = 'US Army Decal 9', [10] = 'US Army Decal 10', [11] = 'US Army Decal 11',
+                        [12] = 'US Army Decal 12', [13] = 'US Army Decal 13', [14] = 'US Army Decal 14', [15] = 'US Army Decal 15',
+                        [16] = 'US Army Decal 16', [17] = 'US Army Decal 17', [18] = 'US Army Decal 18', [19] = 'US Army Decal 19',
+                        [20] = 'US Army Decal 20', [21] = 'US Army Decal 21', [22] = 'US Army Decal 22', [23] = 'US Army Decal 23',
+                        [24] = 'US Army Decal 24', [25] = 'US Army Decal 25', [26] = 'US Army Decal 26', [27] = 'US Army Decal 27',
+                        [28] = 'US Army Decal 28', [29] = 'US Army Decal 29', [30] = 'US Army Decal 30', [31] = 'US Army Decal 31',
+                        [32] = 'US Army Decal 32', [33] = 'US Army Decal 33', [34] = 'US Army Decal 34', [35] = 'US Army Decal 35',
+                        [36] = 'US Army Decal 36', [37] = 'US Army Decal 37', [38] = 'US Army Decal 38', [39] = 'US Army Decal 39',
+                        [40] = 'US Army Decal 40',
+                    },
+                },
+                [11] = { -- Top / Jacket
+                    ['r4usarmyv3'] = {
+                        [0] = 'US Army Top 0', [1] = 'US Army Top 1', [2] = 'US Army Top 2', [3] = 'US Army Top 3',
+                        [4] = 'US Army Top 4', [5] = 'US Army Top 5', [6] = 'US Army Top 6', [7] = 'US Army Top 7',
+                        [8] = 'US Army Top 8', [9] = 'US Army Top 9',
+                    },
+                },
+            },
+            props = {
+                [0] = { -- Hat
+                    ['r4usarmyv3'] = {
+                        [0] = 'US Army Hat 0', [1] = 'US Army Hat 1', [2] = 'US Army Hat 2', [3] = 'US Army Hat 3',
+                        [4] = 'US Army Hat 4', [5] = 'US Army Hat 5', [6] = 'US Army Hat 6', [7] = 'US Army Hat 7',
+                        [8] = 'US Army Hat 8', [9] = 'US Army Hat 9', [10] = 'US Army Hat 10', [11] = 'US Army Hat 11',
+                        [12] = 'US Army Hat 12', [13] = 'US Army Hat 13', [14] = 'US Army Hat 14', [15] = 'US Army Hat 15',
+                        [16] = 'US Army Hat 16',
+                    },
+                },
+                [1] = { -- Glasses
+                    ['r4usarmyv3'] = {
+                        [0] = 'US Army Glasses 0', [1] = 'US Army Glasses 1', [2] = 'US Army Glasses 2', [3] = 'US Army Glasses 3',
+                        [4] = 'US Army Glasses 4', [5] = 'US Army Glasses 5', [6] = 'US Army Glasses 6',
+                    },
+                },
+                [2] = { -- Ears
+                    ['r4usarmyv3'] = {
+                        [0] = 'US Army Ears 0', [1] = 'US Army Ears 1', [2] = 'US Army Ears 2', [3] = 'US Army Ears 3',
+                        [4] = 'US Army Ears 4', [5] = 'US Army Ears 5', [6] = 'US Army Ears 6',
+                    },
+                },
+            },
         },
         presets = {
             -- Legacy global indexes below still apply, but re-run /saveoutfit
@@ -268,6 +375,10 @@ Config.Factions = {
             [2] = { min = -1, max = 50 },
             [6] = { min = -1, max = 50 },
             [7] = { min = -1, max = 50 },
+        },
+        clothingNames = {
+            components = {},
+            props = {},
         },
         presets = {}
     },
