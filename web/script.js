@@ -477,7 +477,9 @@ function lookupClothingName(isProp, slotId, collection, localDrawable) {
     const col = collection == null ? '' : String(collection);
     const byCol = bySlot[col];
     if (!byCol || typeof byCol !== 'object') return null;
-    const name = byCol[String(localDrawable)] ?? byCol[localDrawable];
+    const entry = byCol[String(localDrawable)] ?? byCol[localDrawable];
+    if (!entry) return null;
+    const name = typeof entry === 'object' ? entry.label : entry;
     return name || null;
 }
 
@@ -505,12 +507,15 @@ function getCatalogItems(isProp, slotId) {
         for (const localKey of keys) {
             const localDrawable = Number(localKey);
             if (Number.isNaN(localDrawable)) continue;
-            const label = locals[localKey];
+            const entry = locals[localKey];
+            const label = entry && typeof entry === 'object' ? entry.label : entry;
+            const sex = entry && typeof entry === 'object' ? entry.sex : 'unisex';
             if (label == null || label === '') continue;
             items.push({
                 collection,
                 localDrawable,
                 label: String(label),
+                sex: sex || 'unisex',
             });
         }
     }

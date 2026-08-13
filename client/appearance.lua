@@ -16,16 +16,6 @@ end
 
 function ApplyModel(model)
     local hash = type(model) == 'string' and joaat(model) or model
-    local ped = PlayerPedId()
-
-    if GetEntityModel(ped) == hash then
-        -- Already this model (e.g. kyr_appearance restarted mid-session and
-        -- ox_core re-fired ox:setActiveCharacter) — skip the destructive
-        -- default reset, it doesn't reliably get overwritten again if the
-        -- model never actually reloads.
-        return true
-    end
-
     RequestModel(hash)
 
     local timeout = GetGameTimer() + 5000
@@ -38,7 +28,7 @@ function ApplyModel(model)
     SetPlayerModel(PlayerId(), hash)
     SetModelAsNoLongerNeeded(hash)
 
-    ped = PlayerPedId()
+    local ped = PlayerPedId()
     SetPedDefaultComponentVariation(ped)
     SetPedHeadBlendData(ped, 0, 0, 0, 0, 0, 0, 0.5, 0.5, 0.0, false)
 

@@ -157,11 +157,17 @@ Config.Factions = {
         },
         -- Locker Clothing tab: only these named items (collection + local drawable)
         -- collection string must match /saveoutfit dump exactly (e.g. 'r4usarmyc3')
+        --
+        -- Each item is { label = "Display Name", sex = 'male' | 'female' | 'unisex' }.
+        -- `sex` controls who sees the item in the locker menu at all (filtered
+        -- client-side before the NUI even renders it), and is re-checked when the
+        -- item is applied. Omitting `sex` (or using a bare string like older
+        -- configs did) defaults to 'unisex'.
         clothingNames = {
             components = {
                 -- [1]  = { -- Mask
                 --     ['r4usarmyc3'] = {
-                --         [0] = 'Example Mask',
+                --         [0] = { label = 'Example Mask', sex = 'unisex' },
                 --     },
                 -- },
                 -- [3]  = { -- Arms / Torso
@@ -182,15 +188,16 @@ Config.Factions = {
                 -- },
                 -- [11] = { -- Top / Jacket
                 --     ['r4usarmyc3'] = {
-                --         [0] = 'USMC Frogman [Wood Untucked]',
-                --         [1] = 'USMC Frogman [Desert Untucked]',
+                --         [0] = { label = 'USMC Frogman [Wood Untucked]', sex = 'male' },
+                --         [1] = { label = 'USMC Frogman [Desert Untucked]', sex = 'male' },
+                --         [5] = { label = 'USMC Frogman [Wood Untucked]', sex = 'female' },
                 --     },
                 -- },
             },
             props = {
                 -- [0] = { -- Hat
                 --     ['r4usarmyc3'] = {
-                --         [0] = 'USMC Cap',
+                --         [0] = { label = 'USMC Cap', sex = 'unisex' },
                 --     },
                 -- },
                 -- [1] = { -- Glasses
@@ -298,9 +305,9 @@ Config.Factions = {
                 },
                 [11] = { -- Top / Jacket
                     ['r4usarmyv3'] = {
-                        [0] = '[ACU] OCP Coat | Untucked', [1] = '[ACU] OCP Coat | Untucked | Sleeves', [2] = '[ACU] OCP Coat | Tucked', [3] = '[ACU] OCP Coat | Tucked | Sleeves',
-                        [4] = '[IHWCU] OCP Coat | Untucked', [5] = '[IHWCU] OCP Coat | Untucked | Sleeves', [6] = '[IHWCU] OCP Coat | Tucked', [7] = '[IHWCU] OCP Coat | Tucked | Sleeves',
-                        [8] = '[ACU] OCP Combat Shirt', [9] = '[ACU] OCP Combat Shirt | Unzipped',
+                        [0] = 'US Army Top 0', [1] = 'US Army Top 1', [2] = 'US Army Top 2', [3] = 'US Army Top 3',
+                        [4] = 'US Army Top 4', [5] = 'US Army Top 5', [6] = 'US Army Top 6', [7] = 'US Army Top 7',
+                        [8] = 'US Army Top 8', [9] = 'US Army Top 9',
                     },
                 },
             },
