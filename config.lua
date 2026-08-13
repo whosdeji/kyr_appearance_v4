@@ -21,6 +21,7 @@ Config.MaxZoom = 2.5
 Config.DefaultZoom = 1.4
 Config.RotateStep = 12.0  -- degrees per rotate tick (hold for continuous)
 Config.MaxPlayerPresets = 20  -- max custom outfits a player can save
+Config.ShareCodeLength = 8     -- length of shared outfit codes
 Config.ZoomStep = 0.15
 
 -- ACE permission required to run /characterisation

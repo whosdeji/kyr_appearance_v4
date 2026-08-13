@@ -671,3 +671,70 @@ html, body {
     text-transform: uppercase;
     letter-spacing: 0.6px;
 }
+
+
+.preset-share-row {
+    display: flex;
+    gap: 8px;
+    padding: 8px 16px 4px;
+    flex-shrink: 0;
+    align-items: center;
+}
+
+.preset-share-row input {
+    flex: 1;
+    min-width: 0;
+    background: #1c2126;
+    border: 1px solid #2d333a;
+    border-radius: 4px;
+    color: #e8edf2;
+    padding: 8px 10px;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.preset-share-row input:focus {
+    outline: none;
+    border-color: #9fe870;
+}
+
+.preset-share-btn {
+    background: #9fe870;
+    border: none;
+    border-radius: 4px;
+    color: #0f1216;
+    font-weight: 600;
+    font-size: 12px;
+    padding: 8px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.preset-share-btn.secondary {
+    background: transparent;
+    border: 1px solid #9fe870;
+    color: #9fe870;
+}
+
+.preset-share-btn:hover {
+    filter: brightness(1.05);
+}
+
+.share-code-status {
+    margin: 4px 16px 8px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    background: rgba(159, 232, 112, 0.12);
+    border: 1px solid #2d333a;
+    color: #9fe870;
+    font-size: 12px;
+    font-family: ui-monospace, monospace;
+    letter-spacing: 1px;
+    word-break: break-all;
+}
+
+.share-code-status.error {
+    color: #ff8a8a;
+    background: rgba(255, 80, 80, 0.1);
+}

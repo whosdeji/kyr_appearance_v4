@@ -465,6 +465,38 @@ RegisterNUICallback('getPlayerPresets', function(_, cb)
     lib.callback('kyr_appearance:getPlayerPresets', false, function(list)
         cb({ presets = list or {} })
     end)
+
+RegisterNUICallback('createShareCode', function(_, cb)
+    local outfit = GetCurrentClothing(PlayerPedId())
+    lib.callback('kyr_appearance:createShareCode', false, function(result)
+        cb(result or { ok = false })
+    end, outfit)
+end)
+
+RegisterNUICallback('redeemShareCode', function(data, cb)
+    local code = data and data.code
+    if type(code) ~= 'string' or code:gsub('%s+', '') == '' then
+        cb({ ok = false, error = 'bad_code' })
+        return
+    end
+
+    lib.callback('kyr_appearance:redeemShareCode', false, function(result)
+        if not result or not result.ok or type(result.outfit) ~= 'table' then
+            cb(result or { ok = false, error = 'not_found' })
+            return
+        end
+
+        ApplyClothing(PlayerPedId(), result.outfit)
+        Wait(50)
+        local ped = PlayerPedId()
+        cb({
+            ok = true,
+            code = result.code,
+            clothing = GetCurrentClothing(ped),
+            clothingLimits = GetClothingLimits(ped),
+        })
+    end, code)
+end)
 end)
 
 RegisterNUICallback('save', function(data, cb)

@@ -1045,6 +1045,70 @@ function addPresetCard(container, preset) {
     container.appendChild(card);
 }
 
+
+function showShareStatus(msg, isError) {
+    const el = document.getElementById('share-code-status');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.classList.toggle('hidden', !msg);
+    el.classList.toggle('error', !!isError);
+}
+
+function bindShareCodes() {
+    const createBtn = document.getElementById('btn-share-outfit');
+    const useBtn = document.getElementById('btn-use-share');
+    const input = document.getElementById('share-code-input');
+    if (!createBtn || createBtn.dataset.bound) return;
+    createBtn.dataset.bound = '1';
+
+    createBtn.addEventListener('click', async () => {
+        createBtn.disabled = true;
+        showShareStatus('Creating code…');
+        const res = await post('createShareCode', {});
+        createBtn.disabled = false;
+        if (res && res.ok && res.code) {
+            showShareStatus(`Share code: ${res.code}`);
+            if (input) input.value = res.code;
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(res.code);
+                    showShareStatus(`Share code: ${res.code} (copied)`);
+                }
+            } catch (_) {}
+        } else {
+            showShareStatus('Could not create share code', true);
+        }
+    });
+
+    const redeem = async () => {
+        const code = (input && input.value || '').trim();
+        if (!code) {
+            showShareStatus('Enter a share code', true);
+            if (input) input.focus();
+            return;
+        }
+        useBtn.disabled = true;
+        showShareStatus('Applying…');
+        const res = await post('redeemShareCode', { code });
+        useBtn.disabled = false;
+        if (res && res.ok) {
+            showShareStatus(`Applied code ${res.code || code}`);
+            await refreshClothingUI(res);
+        } else {
+            const err = (res && res.error) || 'failed';
+            const msg = err === 'not_found' ? 'Code not found' : 'Could not apply code';
+            showShareStatus(msg, true);
+        }
+    };
+
+    if (useBtn) useBtn.addEventListener('click', redeem);
+    if (input) {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') redeem();
+        });
+    }
+}
+
 function bindPresetSave() {
     const btn = document.getElementById('btn-save-preset');
     const input = document.getElementById('preset-name-input');
@@ -1153,6 +1217,7 @@ window.addEventListener('message', event => {
             data.clothingNames
         );
         bindPresetSave();
+        bindShareCodes();
         renderPresets(data.presets || [], data.playerPresets || []);
 
         // Cancel visible for staff OR locker mode

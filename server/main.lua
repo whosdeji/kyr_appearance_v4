@@ -34,7 +34,29 @@ CreateThread(function()
                 ON DELETE CASCADE ON UPDATE CASCADE
         )
     ]])
+
+    -- Shareable outfit codes (anyone with the code can apply the outfit)
+    MySQL.query([[
+        CREATE TABLE IF NOT EXISTS character_outfit_shares (
+            code VARCHAR(12) NOT NULL PRIMARY KEY,
+            outfit LONGTEXT NOT NULL,
+            created_by INT UNSIGNED NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            uses INT UNSIGNED NOT NULL DEFAULT 0
+        )
+    ]])
 end)
+
+local function generateOutfitCode()
+    local charset = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' -- no ambiguous 0/O/1/I
+    local length = Config.ShareCodeLength or 8
+    local code = {}
+    for i = 1, length do
+        local idx = math.random(1, #charset)
+        code[i] = charset:sub(idx, idx)
+    end
+    return table.concat(code)
+end
 
 -- Returns the appearance ONLY if characterisation was finished
 local function isRowCompleted(row)
@@ -203,4 +225,66 @@ lib.callback.register('kyr_appearance:deletePlayerPreset', function(source, name
         { player.charId, name }
     )
     return { ok = true }
+end)
+
+-- -------------------- share outfit codes --------------------
+
+lib.callback.register('kyr_appearance:createShareCode', function(source, outfit)
+    local player = Ox.GetPlayer(source)
+    if not player or not player.charId then return { ok = false, error = 'no_char' } end
+    if type(outfit) ~= 'table' then return { ok = false, error = 'bad_outfit' } end
+
+    local code, attempts = nil, 0
+    repeat
+        code = generateOutfitCode()
+        attempts = attempts + 1
+        local exists = MySQL.scalar.await(
+            'SELECT 1 FROM character_outfit_shares WHERE code = ?',
+            { code }
+        )
+        if not exists then break end
+        code = nil
+    until attempts >= 12
+
+    if not code then return { ok = false, error = 'gen_failed' } end
+
+    MySQL.insert.await([[
+        INSERT INTO character_outfit_shares (code, outfit, created_by)
+        VALUES (?, ?, ?)
+    ]], {
+        code,
+        json.encode(outfit),
+        player.charId
+    })
+
+    return { ok = true, code = code }
+end)
+
+lib.callback.register('kyr_appearance:redeemShareCode', function(source, code)
+    if type(code) ~= 'string' then return { ok = false, error = 'bad_code' } end
+    code = code:gsub('%s+', ''):upper()
+    if code == '' or #code > 16 then return { ok = false, error = 'bad_code' } end
+
+    local row = MySQL.single.await(
+        'SELECT outfit FROM character_outfit_shares WHERE code = ?',
+        { code }
+    )
+    if not row or not row.outfit then
+        return { ok = false, error = 'not_found' }
+    end
+
+    local outfit = row.outfit
+    if type(outfit) == 'string' then
+        outfit = json.decode(outfit)
+    end
+    if type(outfit) ~= 'table' then
+        return { ok = false, error = 'bad_outfit' }
+    end
+
+    MySQL.update.await(
+        'UPDATE character_outfit_shares SET uses = uses + 1 WHERE code = ?',
+        { code }
+    )
+
+    return { ok = true, outfit = outfit, code = code }
 end)
