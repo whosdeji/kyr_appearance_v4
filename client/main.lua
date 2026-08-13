@@ -272,8 +272,11 @@ RegisterNetEvent('ox:setActiveCharacter', function(character, groups)
                     Wait(50)
                     ped = PlayerPedId()
                 end
-                Wait(300)
+                Wait(400)
 
+                -- Apply twice: head blend / face features are unreliable on first pass after model swap
+                ApplyFullAppearance(PlayerPedId(), data)
+                Wait(100)
                 ApplyFullAppearance(PlayerPedId(), data)
 
                 TriggerEvent('kyr_appearance:characterReady', character, groups)
@@ -501,7 +504,10 @@ end)
 
 RegisterNUICallback('save', function(data, cb)
     local wasNewCharacter = newCharacterMode
-    TriggerServerEvent('kyr_appearance:save', GetCurrentAppearance())
+    -- Capture a full snapshot (head blend + face + hair + clothing) before closing
+    local snapshot = GetCurrentAppearance()
+    SetCurrentAppearance(snapshot) -- also refreshes lastFullAppearance inside appearance.lua
+    TriggerServerEvent('kyr_appearance:save', snapshot)
     closeAppearanceMenu()
     cb(1)
 

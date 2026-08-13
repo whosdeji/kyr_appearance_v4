@@ -22,51 +22,139 @@ function ApplyModel(model)
     return true
 end
 
-function ApplyHeadBlend(ped, d)
+local function normalizeHeadBlend(d)
     d = d or {}
+    return {
+        shapeFirst  = tonumber(d.shapeFirst) or 0,
+        shapeSecond = tonumber(d.shapeSecond) or 0,
+        shapeThird  = tonumber(d.shapeThird) or 0,
+        skinFirst   = tonumber(d.skinFirst) or 0,
+        skinSecond  = tonumber(d.skinSecond) or 0,
+        skinThird   = tonumber(d.skinThird) or 0,
+        shapeMix    = tonumber(d.shapeMix) or 0.5,
+        skinMix     = tonumber(d.skinMix) or 0.5,
+        thirdMix    = tonumber(d.thirdMix) or 0.0,
+    }
+end
+
+--- Read head blend from the live ped (FiveM native can vary by build).
+local function ReadHeadBlendFromPed(ped)
+    -- Method used by most appearance resources: struct via InvokeNative
+    local ok, blend = pcall(function()
+        -- GetPedHeadBlendData fills a table in some builds
+        local t = {
+            shapeFirst = 0, shapeSecond = 0, shapeThird = 0,
+            skinFirst = 0, skinSecond = 0, skinThird = 0,
+            shapeMix = 0.0, skinMix = 0.0, thirdMix = 0.0,
+        }
+        local success = GetPedHeadBlendData(ped, t)
+        if success ~= false and (t.shapeFirst or t.shapeSecond or t.shapeMix) then
+            return normalizeHeadBlend(t)
+        end
+        return nil
+    end)
+    if ok and blend then return blend end
+
+    -- Fallback: multi-return form
+    ok, blend = pcall(function()
+        local a, b, c, d, e, f, g, h, i = GetPedHeadBlendData(ped)
+        if a == nil then return nil end
+        -- Some builds return (retval, shapeFirst, ...)
+        if type(a) == 'boolean' then
+            return normalizeHeadBlend({
+                shapeFirst = b, shapeSecond = c, shapeThird = d,
+                skinFirst = e, skinSecond = f, skinThird = g,
+                shapeMix = h, skinMix = i,
+            })
+        end
+        return normalizeHeadBlend({
+            shapeFirst = a, shapeSecond = b, shapeThird = c,
+            skinFirst = d, skinSecond = e, skinThird = f,
+            shapeMix = g, skinMix = h, thirdMix = i,
+        })
+    end)
+    if ok and blend then return blend end
+
+    return nil
+end
+
+local function syncLastFull(key, value)
+    lastFullAppearance = lastFullAppearance or {}
+    lastFullAppearance[key] = value
+end
+
+function ApplyHeadBlend(ped, d)
+    d = normalizeHeadBlend(d)
+    -- Apply twice — GTA often ignores the first call right after model set
     SetPedHeadBlendData(ped,
-        d.shapeFirst or 0, d.shapeSecond or 0, d.shapeThird or 0,
-        d.skinFirst or 0, d.skinSecond or 0, d.skinThird or 0,
-        d.shapeMix or 0.5, d.skinMix or 0.5, d.thirdMix or 0.0,
+        d.shapeFirst, d.shapeSecond, d.shapeThird,
+        d.skinFirst, d.skinSecond, d.skinThird,
+        d.shapeMix, d.skinMix, d.thirdMix,
+        false)
+    SetPedHeadBlendData(ped,
+        d.shapeFirst, d.shapeSecond, d.shapeThird,
+        d.skinFirst, d.skinSecond, d.skinThird,
+        d.shapeMix, d.skinMix, d.thirdMix,
         false)
 
     currentAppearance.headBlend = d
+    syncLastFull('headBlend', d)
 end
 
 function ApplyFaceFeature(ped, index, value)
+    index = tonumber(index)
+    value = tonumber(value) or 0.0
+    if index == nil then return end
     SetPedFaceFeature(ped, index, value)
 
     currentAppearance.faceFeatures = currentAppearance.faceFeatures or {}
     currentAppearance.faceFeatures[tostring(index)] = value
+    lastFullAppearance = lastFullAppearance or {}
+    lastFullAppearance.faceFeatures = lastFullAppearance.faceFeatures or {}
+    lastFullAppearance.faceFeatures[tostring(index)] = value
 end
 
 function ApplyHeadOverlay(ped, overlayId, index, opacity, colorType, colorIndex, secondColorIndex)
-    SetPedHeadOverlay(ped, overlayId, index or 255, opacity or 1.0)
+    overlayId = tonumber(overlayId)
+    if overlayId == nil then return end
+    -- 255 / 0 = clear overlay in GTA
+    local idx = tonumber(index)
+    if idx == nil or idx < 0 then idx = 255 end
+    local op = tonumber(opacity) or 0.0
+
+    SetPedHeadOverlay(ped, overlayId, idx, op)
 
     if colorType and colorIndex then
-        SetPedHeadOverlayColor(ped, overlayId, colorType, colorIndex, secondColorIndex or colorIndex)
+        SetPedHeadOverlayColor(ped, overlayId, tonumber(colorType), tonumber(colorIndex), tonumber(secondColorIndex) or tonumber(colorIndex))
     end
 
-    currentAppearance.overlays = currentAppearance.overlays or {}
-    currentAppearance.overlays[tostring(overlayId)] = {
-        index = index,
-        opacity = opacity,
-        colorType = colorType,
-        colorIndex = colorIndex,
-        secondColorIndex = secondColorIndex
+    local entry = {
+        index = idx,
+        opacity = op,
+        colorType = colorType and tonumber(colorType) or nil,
+        colorIndex = colorIndex and tonumber(colorIndex) or nil,
+        secondColorIndex = secondColorIndex and tonumber(secondColorIndex) or nil
     }
+    currentAppearance.overlays = currentAppearance.overlays or {}
+    currentAppearance.overlays[tostring(overlayId)] = entry
+    lastFullAppearance = lastFullAppearance or {}
+    lastFullAppearance.overlays = lastFullAppearance.overlays or {}
+    lastFullAppearance.overlays[tostring(overlayId)] = entry
 end
 
 function ApplyHair(ped, style, color, highlight)
     SetPedComponentVariation(ped, 2, style or 0, 0, 0)
     SetPedHairColor(ped, color or 0, highlight or 0)
 
-    currentAppearance.hair = { style = style, color = color, highlight = highlight }
+    local hair = { style = style or 0, color = color or 0, highlight = highlight or 0 }
+    currentAppearance.hair = hair
+    syncLastFull('hair', hair)
 end
 
 function ApplyEyeColor(ped, colorId)
     SetPedEyeColor(ped, colorId or 0)
-    currentAppearance.eyeColor = colorId
+    currentAppearance.eyeColor = colorId or 0
+    syncLastFull('eyeColor', colorId or 0)
 end
 
 --- Apply a component using collection + local index when available.
@@ -383,56 +471,81 @@ function GetCurrentAppearance()
         currentAppearance.faceFeatures[tostring(i)] = GetPedFaceFeature(ped, i)
     end
 
-    -- Head blend + overlays: use last full apply (never wiped by locker)
-    if lastFullAppearance then
-        if lastFullAppearance.headBlend then
-            currentAppearance.headBlend = lastFullAppearance.headBlend
-        end
-        if lastFullAppearance.overlays then
-            currentAppearance.overlays = lastFullAppearance.overlays
-        end
-        if not currentAppearance.hair and lastFullAppearance.hair then
-            currentAppearance.hair = lastFullAppearance.hair
-        end
-        if currentAppearance.eyeColor == nil and lastFullAppearance.eyeColor ~= nil then
-            currentAppearance.eyeColor = lastFullAppearance.eyeColor
-        end
+    -- Head blend: prefer live ped, then current edits, then last full snapshot
+    local liveBlend = ReadHeadBlendFromPed(ped)
+    if liveBlend then
+        currentAppearance.headBlend = liveBlend
+    elseif currentAppearance.headBlend then
+        -- keep edits already tracked this session
+        currentAppearance.headBlend = normalizeHeadBlend(currentAppearance.headBlend)
+    elseif lastFullAppearance and lastFullAppearance.headBlend then
+        currentAppearance.headBlend = normalizeHeadBlend(lastFullAppearance.headBlend)
     end
 
-    return currentAppearance
+    -- Overlays: keep tracked session data (GTA has no reliable full read-back)
+    if not currentAppearance.overlays and lastFullAppearance and lastFullAppearance.overlays then
+        currentAppearance.overlays = lastFullAppearance.overlays
+    end
+
+    -- Keep lastFullAppearance in sync so locker sessions cannot wipe heritage
+    lastFullAppearance = lastFullAppearance or {}
+    lastFullAppearance.headBlend = currentAppearance.headBlend
+    lastFullAppearance.faceFeatures = currentAppearance.faceFeatures
+    lastFullAppearance.overlays = currentAppearance.overlays
+    lastFullAppearance.hair = currentAppearance.hair
+    lastFullAppearance.eyeColor = currentAppearance.eyeColor
+    lastFullAppearance.model = currentAppearance.model
+    lastFullAppearance.components = currentAppearance.components
+    lastFullAppearance.props = currentAppearance.props
+
+    -- Return a deep copy so callers cannot mutate our tracking tables
+    return json.decode(json.encode(currentAppearance))
 end
 
 function SetCurrentAppearance(data)
     currentAppearance = data or {}
+    lastFullAppearance = data and json.decode(json.encode(data)) or nil
 end
 
 function ApplyFullAppearance(ped, data)
     if not data then return end
+    ped = ped or PlayerPedId()
 
+    -- 1) Head blend first (twice + short wait so face features stick)
     if data.headBlend then
         ApplyHeadBlend(ped, data.headBlend)
+        Wait(50)
+        ApplyHeadBlend(ped, data.headBlend)
+        Wait(50)
     end
 
+    -- 2) Face features
     if data.faceFeatures then
         for idx, val in pairs(data.faceFeatures) do
             ApplyFaceFeature(ped, tonumber(idx), val)
         end
+        Wait(50)
     end
 
+    -- 3) Overlays (beard, brows, makeup, etc.)
     if data.overlays then
         for id, o in pairs(data.overlays) do
-            ApplyHeadOverlay(ped, tonumber(id), o.index, o.opacity, o.colorType, o.colorIndex, o.secondColorIndex)
+            if type(o) == 'table' then
+                ApplyHeadOverlay(ped, tonumber(id), o.index, o.opacity, o.colorType, o.colorIndex, o.secondColorIndex)
+            end
         end
     end
 
+    -- 4) Hair + eyes
     if data.hair then
         ApplyHair(ped, data.hair.style, data.hair.color, data.hair.highlight)
     end
 
-    if data.eyeColor then
+    if data.eyeColor ~= nil then
         ApplyEyeColor(ped, data.eyeColor)
     end
 
+    -- 5) Clothing last
     if data.components or data.props then
         ApplyClothing(ped, {
             components = data.components,
@@ -440,6 +553,8 @@ function ApplyFullAppearance(ped, data)
         })
     end
 
-    currentAppearance = data
-    lastFullAppearance = data
+    -- Snapshot for future saves
+    local snapshot = json.decode(json.encode(data))
+    currentAppearance = snapshot
+    lastFullAppearance = json.decode(json.encode(data))
 end
