@@ -25,7 +25,7 @@
 
     <div id="panel">
         <div id="panel-header">
-            <span>CHARACTERISATION</span>
+            <span id="panel-title">CHARACTERISATION</span>
         </div>
 
         <div id="tabs">
@@ -71,19 +71,39 @@
                 <!-- head overlay controls injected here -->
             </div>
 
-            <!-- Clothing -->
+            <!-- Clothing: split category | items (locker-style) -->
             <div class="tab-pane" id="tab-clothing">
-                <div class="section-label">Components</div>
-                <div id="clothing-components"></div>
-
-                <div class="section-label" style="margin-top:1.2rem;">Props</div>
-                <div id="clothing-props"></div>
+                <div id="clothing-layout">
+                    <div id="clothing-categories" class="clothing-categories" role="list"></div>
+                    <div id="clothing-items-panel" class="clothing-items-panel">
+                        <div id="clothing-items-header" class="clothing-items-header">
+                            <span id="clothing-items-title">Select a category</span>
+                            <span id="clothing-items-count" class="items-count"></span>
+                        </div>
+                        <div id="clothing-items" class="clothing-items" role="list"></div>
+                        <div id="clothing-texture-bar" class="clothing-texture-bar hidden">
+                            <label>Texture</label>
+                            <input id="clothing-texture-range" type="range" min="0" max="0" step="1" value="0">
+                            <span id="clothing-texture-val" class="val-input" style="pointer-events:none;">0</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Legacy slider fallback (characterisation narrow panel) kept for non-locker if needed -->
+                <div id="clothing-legacy" class="hidden">
+                    <div class="section-label">Components</div>
+                    <div id="clothing-components"></div>
+                    <div class="section-label" style="margin-top:1.2rem;">Props</div>
+                    <div id="clothing-props"></div>
+                </div>
             </div>
 
             <!-- Presets -->
             <div class="tab-pane" id="tab-presets">
-                <div class="section-label">Outfit Presets</div>
-                <div id="preset-list"></div>
+                <div class="presets-header">
+                    <div class="section-label" style="margin:0;">Outfit Presets</div>
+                    <p class="presets-hint">Click a preset to equip it instantly</p>
+                </div>
+                <div id="preset-list" class="preset-grid"></div>
             </div>
 
         </div>
