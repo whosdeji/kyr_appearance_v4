@@ -470,6 +470,17 @@ function clothingKey(isProp, id) {
     return (isProp ? 'p' : 'c') + id;
 }
 
+/** Extract a display label from either a legacy string or { label, sex } object. */
+function extractLabel(raw) {
+    if (raw == null) return null;
+    if (typeof raw === 'string') return raw || null;
+    if (typeof raw === 'object') {
+        const label = raw.label ?? raw.name ?? null;
+        return (typeof label === 'string' && label !== '') ? label : null;
+    }
+    return null;
+}
+
 /** Lookup display name by collection + local drawable (stable identity). */
 function lookupClothingName(isProp, slotId, collection, localDrawable) {
     const bySlot = slotBucket(isProp, slotId);
@@ -477,10 +488,8 @@ function lookupClothingName(isProp, slotId, collection, localDrawable) {
     const col = collection == null ? '' : String(collection);
     const byCol = bySlot[col];
     if (!byCol || typeof byCol !== 'object') return null;
-    const entry = byCol[String(localDrawable)] ?? byCol[localDrawable];
-    if (!entry) return null;
-    const name = typeof entry === 'object' ? entry.label : entry;
-    return name || null;
+    const raw = byCol[String(localDrawable)] ?? byCol[localDrawable];
+    return extractLabel(raw);
 }
 
 /** Flatten Config.ClothingNames entries for a slot into a list of catalog items. */
@@ -492,6 +501,8 @@ function slotBucket(isProp, slotId) {
     return bucket[String(slotId)] || bucket[slotId] || null;
 }
 
+/** Flatten Config.ClothingNames entries for a slot into a list of catalog items.
+ *  Lua already filtered by ped sex, so we only need to normalise the shape. */
 function getCatalogItems(isProp, slotId) {
     const bySlot = slotBucket(isProp, slotId);
     if (!bySlot || typeof bySlot !== 'object' || Array.isArray(bySlot)) return [];
@@ -500,25 +511,28 @@ function getCatalogItems(isProp, slotId) {
     for (const collection of Object.keys(bySlot)) {
         const locals = bySlot[collection];
         if (!locals || typeof locals !== 'object') continue;
-        // locals may be object {"0":"name"} or rare array
+
         const keys = Array.isArray(locals)
             ? Array.from({ length: locals.length }, (_, i) => String(i))
             : Object.keys(locals);
+
         for (const localKey of keys) {
             const localDrawable = Number(localKey);
             if (Number.isNaN(localDrawable)) continue;
-            const entry = locals[localKey];
-            const label = entry && typeof entry === 'object' ? entry.label : entry;
-            const sex = entry && typeof entry === 'object' ? entry.sex : 'unisex';
-            if (label == null || label === '') continue;
+
+            const raw = locals[localKey];
+            const label = extractLabel(raw);
+            if (!label) continue;
+
             items.push({
                 collection,
                 localDrawable,
-                label: String(label),
-                sex: sex || 'unisex',
+                label,
+                sex: (raw && typeof raw === 'object' && raw.sex) ? String(raw.sex) : 'unisex',
             });
         }
     }
+
     items.sort((a, b) => {
         if (a.collection !== b.collection) return a.collection.localeCompare(b.collection);
         return a.localDrawable - b.localDrawable;

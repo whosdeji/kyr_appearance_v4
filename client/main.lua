@@ -6,10 +6,6 @@ local savedPosition = nil
 local currentMode = 'characterisation' -- 'characterisation' | 'locker'
 local currentFaction = nil
 
-local function GetPedSex(ped)
-    return IsPedModel(ped, `mp_f_freemode_01`) and 'female' or 'male'
-end
-
 local function preloadEditorArea(coords)
     local x, y, z = coords.x, coords.y, coords.z
 
@@ -46,18 +42,52 @@ local function getCurrentPosition(ped)
     return vector4(coords.x, coords.y, coords.z, GetEntityHeading(ped))
 end
 
---- Force string keys so json.encode never turns sparse slot tables into arrays
---- (which would shift Mask/Arms/Legs labels in the NUI catalog).
---- Also filters out items whose `sex` doesn't match the ped's current sex, and
---- normalizes each entry to a { label, sex } table so the NUI has a consistent
---- shape whether the config used the old plain-string form or the new one.
-local function normalizeClothingNames(src, pedSex)
+--- Returns 'male' or 'female' for the current freemode ped.
+local function getPedSex(ped)
+    ped = ped or PlayerPedId()
+    local model = GetEntityModel(ped)
+    if model == Config.Models.female or model == `mp_f_freemode_01` then
+        return 'female'
+    end
+    return 'male'
+end
+
+--- Resolve a clothingNames entry into { label = string, sex = 'male'|'female'|'unisex' }.
+--- Accepts legacy bare strings and the new object form.
+local function resolveClothingEntry(entry)
+    if type(entry) == 'string' then
+        return { label = entry, sex = 'unisex' }
+    end
+    if type(entry) == 'table' then
+        local label = entry.label or entry.name or entry[1]
+        if type(label) ~= 'string' or label == '' then return nil end
+        local sex = entry.sex or entry.gender or 'unisex'
+        sex = string.lower(tostring(sex))
+        if sex ~= 'male' and sex ~= 'female' and sex ~= 'unisex' then
+            sex = 'unisex'
+        end
+        return { label = label, sex = sex }
+    end
+    return nil
+end
+
+--- True when an item is allowed for the given ped sex.
+local function sexAllowed(itemSex, pedSex)
+    if not itemSex or itemSex == 'unisex' then return true end
+    return itemSex == pedSex
+end
+
+--- Force string keys + normalise entries + optionally filter by ped sex.
+--- When filterSex is a string ('male'/'female'), incompatible items are dropped
+--- so the NUI never even sees them.
+local function normalizeClothingNames(src, filterSex)
     local out = { components = {}, props = {} }
     if type(src) ~= 'table' then return out end
 
     local function normalizeSlotMap(slotMap)
         local slots = {}
         if type(slotMap) ~= 'table' then return slots end
+
         for slotId, collections in pairs(slotMap) do
             local slotKey = tostring(slotId)
             local colOut = {}
@@ -66,32 +96,31 @@ local function normalizeClothingNames(src, pedSex)
                     local colKey = tostring(collection)
                     local drawOut = {}
                     if type(drawables) == 'table' then
-                        for localIdx, entry in pairs(drawables) do
-                            local label, sex
-
-                            if type(entry) == 'table' then
-                                label = entry.label
-                                sex = entry.sex or 'unisex'
-                            else
-                                label = entry -- legacy plain string, treated as unisex
-                                sex = 'unisex'
-                            end
-
-                            if label ~= nil and label ~= '' and (sex == 'unisex' or sex == pedSex) then
-                                drawOut[tostring(localIdx)] = { label = label, sex = sex }
+                        for localIdx, raw in pairs(drawables) do
+                            local resolved = resolveClothingEntry(raw)
+                            if resolved and sexAllowed(resolved.sex, filterSex) then
+                                -- Send a clean object the NUI can always read
+                                drawOut[tostring(localIdx)] = {
+                                    label = resolved.label,
+                                    sex   = resolved.sex,
+                                }
                             end
                         end
                     end
-                    colOut[colKey] = drawOut
+                    if next(drawOut) then
+                        colOut[colKey] = drawOut
+                    end
                 end
             end
-            slots[slotKey] = colOut
+            if next(colOut) then
+                slots[slotKey] = colOut
+            end
         end
         return slots
     end
 
     out.components = normalizeSlotMap(src.components)
-    out.props = normalizeSlotMap(src.props)
+    out.props      = normalizeSlotMap(src.props)
     return out
 end
 
@@ -99,6 +128,8 @@ local function buildNuiPayload(options)
     options = options or {}
     local mode = options.mode or 'characterisation'
     local factionKey = options.faction
+    local ped = PlayerPedId()
+    local pedSex = getPedSex(ped)
 
     local overlays = {}
     for _, o in ipairs(Config.HeadOverlays) do
@@ -111,10 +142,9 @@ local function buildNuiPayload(options)
         }
     end
 
-    local clothingLimits = GetClothingLimits(PlayerPedId())
-    local currentClothing = GetCurrentClothing(PlayerPedId())
+    local clothingLimits = GetClothingLimits(ped)
+    local currentClothing = GetCurrentClothing(ped)
 
-    -- Faction / global config presets (names only; outfit lives in config)
     local presets = {}
     if mode == 'locker' and factionKey and Config.Factions[factionKey] then
         for name, _ in pairs(Config.Factions[factionKey].presets or {}) do
@@ -127,7 +157,6 @@ local function buildNuiPayload(options)
     end
     table.sort(presets, function(a, b) return a.name < b.name end)
 
-    -- Player-owned presets (name + outfit)
     local playerPresets = lib.callback.await('kyr_appearance:getPlayerPresets', false) or {}
 
     local allowed, allowedProps = nil, nil
@@ -137,11 +166,14 @@ local function buildNuiPayload(options)
         local fac = Config.Factions[factionKey]
         allowed = fac.allowed
         allowedProps = fac.allowedProps
-        -- Faction-specific catalog for the Clothing tab
         if fac.clothingNames then
             clothingNames = fac.clothingNames
         end
     end
+
+    -- In locker mode we filter by ped sex so male clothes never appear for female peds (and vice versa).
+    -- In characterisation mode we still normalise but do not drop items (filterSex = nil).
+    local filterSex = (mode == 'locker') and pedSex or nil
 
     return {
         faceFeatures = Config.FaceFeatures,
@@ -151,18 +183,41 @@ local function buildNuiPayload(options)
         staffMode = staffMode,
         mode = mode,
         faction = factionKey,
+        pedSex = pedSex,                     -- useful for NUI if needed later
 
         clothingComponents = Config.ClothingComponents,
         clothingProps = Config.ClothingProps,
         clothingLimits = clothingLimits,
         currentClothing = currentClothing,
-        clothingNames = normalizeClothingNames(clothingNames, GetPedSex(PlayerPedId())),
+        clothingNames = normalizeClothingNames(clothingNames, filterSex),
         presets = presets,
         playerPresets = playerPresets,
 
         allowed = allowed,
         allowedProps = allowedProps,
     }
+end
+
+--- Look up the configured sex for a catalog item. Returns 'unisex' if unknown.
+local function getCatalogItemSex(isProp, slotId, collection, localDrawable)
+    if not currentFaction or not Config.Factions[currentFaction] then
+        return 'unisex'
+    end
+    local names = Config.Factions[currentFaction].clothingNames
+    if not names then return 'unisex' end
+
+    local bucket = isProp and names.props or names.components
+    if type(bucket) ~= 'table' then return 'unisex' end
+
+    local bySlot = bucket[tonumber(slotId)] or bucket[tostring(slotId)]
+    if type(bySlot) ~= 'table' then return 'unisex' end
+
+    local byCol = bySlot[collection or ''] or bySlot[tostring(collection or '')]
+    if type(byCol) ~= 'table' then return 'unisex' end
+
+    local raw = byCol[tonumber(localDrawable)] or byCol[tostring(localDrawable)]
+    local resolved = resolveClothingEntry(raw)
+    return (resolved and resolved.sex) or 'unisex'
 end
 
 --- options = { mode = 'locker'|'characterisation', faction = 'usmarines' }
@@ -412,47 +467,62 @@ local function isAllowedSex(componentId, isProp, collection, localDrawable)
 end
 
 RegisterNUICallback('component', function(data, cb)
-    -- Catalog items send useCollection=true with collection + local drawable.
-    -- Numeric browser sends only global drawable/texture.
-    if data.useCollection then
-        local localDrawable = tonumber(data.localDrawable or data.drawable) or 0
+    local ped = PlayerPedId()
 
-        if not isAllowedSex(data.id, false, data.collection, localDrawable) then
-            cb({ clothing = GetCurrentClothing(PlayerPedId()), rejected = true })
-            return
+    if data.useCollection then
+        -- Re-check sex when applying a named catalog item (locker mode)
+        if currentMode == 'locker' then
+            local itemSex = getCatalogItemSex(false, data.id, data.collection, data.localDrawable or data.drawable)
+            if not sexAllowed(itemSex, getPedSex(ped)) then
+                lib.notify({
+                    title = 'Locker',
+                    description = 'This clothing is not available for your character.',
+                    type = 'error'
+                })
+                cb({ clothing = GetCurrentClothing(ped), error = 'sex_mismatch' })
+                return
+            end
         end
 
-        ApplyComponent(PlayerPedId(), data.id, {
-            collection = data.collection or '',
-            localDrawable = localDrawable,
-            drawable = localDrawable,
-            texture = data.texture,
+        ApplyComponent(ped, data.id, {
+            collection    = data.collection or '',
+            localDrawable = tonumber(data.localDrawable or data.drawable) or 0,
+            drawable      = tonumber(data.localDrawable or data.drawable) or 0,
+            texture       = data.texture,
         })
     else
-        ApplyComponent(PlayerPedId(), data.id, data.drawable, data.texture)
+        ApplyComponent(ped, data.id, data.drawable, data.texture)
     end
-    cb({ clothing = GetCurrentClothing(PlayerPedId()) })
+    cb({ clothing = GetCurrentClothing(ped) })
 end)
 
 RegisterNUICallback('prop', function(data, cb)
-    if data.useCollection then
-        local localDrawable = tonumber(data.localDrawable or data.drawable) or -1
+    local ped = PlayerPedId()
 
-        if not isAllowedSex(data.id, true, data.collection, localDrawable) then
-            cb({ clothing = GetCurrentClothing(PlayerPedId()), rejected = true })
-            return
+    if data.useCollection then
+        if currentMode == 'locker' then
+            local itemSex = getCatalogItemSex(true, data.id, data.collection, data.localDrawable or data.drawable)
+            if not sexAllowed(itemSex, getPedSex(ped)) then
+                lib.notify({
+                    title = 'Locker',
+                    description = 'This clothing is not available for your character.',
+                    type = 'error'
+                })
+                cb({ clothing = GetCurrentClothing(ped), error = 'sex_mismatch' })
+                return
+            end
         end
 
-        ApplyProp(PlayerPedId(), data.id, {
-            collection = data.collection or '',
-            localDrawable = localDrawable,
-            drawable = localDrawable,
-            texture = data.texture,
+        ApplyProp(ped, data.id, {
+            collection    = data.collection or '',
+            localDrawable = tonumber(data.localDrawable or data.drawable) or -1,
+            drawable      = tonumber(data.localDrawable or data.drawable) or -1,
+            texture       = data.texture,
         })
     else
-        ApplyProp(PlayerPedId(), data.id, data.drawable, data.texture)
+        ApplyProp(ped, data.id, data.drawable, data.texture)
     end
-    cb({ clothing = GetCurrentClothing(PlayerPedId()) })
+    cb({ clothing = GetCurrentClothing(ped) })
 end)
 
 RegisterNUICallback('getTextureMax', function(data, cb)

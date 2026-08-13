@@ -4,7 +4,7 @@ lua54 'yes'
 
 name 'kyr_appearance'
 author 'Kyrell'
-description 'mp_freemode appearance creator (post ox_core) with collection-stable clothing presets'
+description 'mp_freemode appearance creator + faction clothing lockers for ox_core'
 version '1.1.0'
 
 shared_scripts {

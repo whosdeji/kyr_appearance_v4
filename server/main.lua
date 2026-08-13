@@ -91,12 +91,6 @@ lib.callback.register('kyr_appearance:isCompleted', function(source)
         { player.charId }
     )
 
-    print(('[kyr_appearance] charId=%s completed=%s type=%s'):format(
-        tostring(player.charId),
-        tostring(row and row.completed),
-        type(row and row.completed)
-    ))
-
     return isRowCompleted(row)
 end)
 
