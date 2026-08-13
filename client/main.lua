@@ -42,6 +42,40 @@ local function getCurrentPosition(ped)
     return vector4(coords.x, coords.y, coords.z, GetEntityHeading(ped))
 end
 
+--- Force string keys so json.encode never turns sparse slot tables into arrays
+--- (which would shift Mask/Arms/Legs labels in the NUI catalog).
+local function normalizeClothingNames(src)
+    local out = { components = {}, props = {} }
+    if type(src) ~= 'table' then return out end
+
+    local function normalizeSlotMap(slotMap)
+        local slots = {}
+        if type(slotMap) ~= 'table' then return slots end
+        for slotId, collections in pairs(slotMap) do
+            local slotKey = tostring(slotId)
+            local colOut = {}
+            if type(collections) == 'table' then
+                for collection, drawables in pairs(collections) do
+                    local colKey = tostring(collection)
+                    local drawOut = {}
+                    if type(drawables) == 'table' then
+                        for localIdx, label in pairs(drawables) do
+                            drawOut[tostring(localIdx)] = label
+                        end
+                    end
+                    colOut[colKey] = drawOut
+                end
+            end
+            slots[slotKey] = colOut
+        end
+        return slots
+    end
+
+    out.components = normalizeSlotMap(src.components)
+    out.props = normalizeSlotMap(src.props)
+    return out
+end
+
 local function buildNuiPayload(options)
     options = options or {}
     local mode = options.mode or 'characterisation'
@@ -74,9 +108,16 @@ local function buildNuiPayload(options)
     table.sort(presets)
 
     local allowed, allowedProps = nil, nil
+    local clothingNames = Config.ClothingNames or { components = {}, props = {} }
+
     if mode == 'locker' and factionKey and Config.Factions[factionKey] then
-        allowed = Config.Factions[factionKey].allowed
-        allowedProps = Config.Factions[factionKey].allowedProps
+        local fac = Config.Factions[factionKey]
+        allowed = fac.allowed
+        allowedProps = fac.allowedProps
+        -- Faction-specific catalog for the Clothing tab
+        if fac.clothingNames then
+            clothingNames = fac.clothingNames
+        end
     end
 
     return {
@@ -92,7 +133,7 @@ local function buildNuiPayload(options)
         clothingProps = Config.ClothingProps,
         clothingLimits = clothingLimits,
         currentClothing = currentClothing,
-        clothingNames = Config.ClothingNames or { components = {}, props = {} },
+        clothingNames = normalizeClothingNames(clothingNames),
         presets = presets,
 
         allowed = allowed,
@@ -114,7 +155,8 @@ function OpenAppearanceMenu(isNewCharacter, staff, gender, options)
 
     if not isNewCharacter then
         savedPosition = getCurrentPosition(ped)
-        previousAppearance = GetCurrentAppearance()
+        -- Deep-copy so live edits to currentAppearance cannot mutate the cancel snapshot
+        previousAppearance = json.decode(json.encode(GetCurrentAppearance()))
     end
 
     TriggerServerEvent('kyr_appearance:enterEditor')
