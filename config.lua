@@ -300,7 +300,7 @@ Config.Factions = {
                     ['r4usarmyv3'] = {
                         [0] = '[ACU] OCP Coat | Untucked', [1] = '[ACU] OCP Coat | Untucked | Sleeves', [2] = '[ACU] OCP Coat | Tucked', [3] = '[ACU] OCP Coat | Tucked | Sleeves',
                         [4] = '[IHWCU] OCP Coat | Untucked', [5] = '[IHWCU] OCP Coat | Untucked | Sleeves', [6] = '[IHWCU] OCP Coat | Tucked', [7] = '[IHWCU] OCP Coat | Tucked | Sleeves',
-                        [8] = '[IHWCU] OCP Combat Shirt', [9] = '[IHWCU] OCP Combat Shirt | Unzipped',
+                        [8] = '[ACU] OCP Combat Shirt', [9] = '[ACU] OCP Combat Shirt | Unzipped',
                     },
                 },
             },
