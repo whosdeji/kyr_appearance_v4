@@ -601,3 +601,73 @@ html, body {
     background: #2d333a;
     border-radius: 3px;
 }
+
+
+.preset-save-row {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px 4px;
+    flex-shrink: 0;
+}
+
+.preset-save-row input {
+    flex: 1;
+    background: #1c2126;
+    border: 1px solid #2d333a;
+    border-radius: 4px;
+    color: #e8edf2;
+    padding: 8px 10px;
+    font-size: 13px;
+}
+
+.preset-save-row input:focus {
+    outline: none;
+    border-color: #9fe870;
+}
+
+.preset-save-btn {
+    background: #9fe870;
+    border: none;
+    border-radius: 4px;
+    color: #0f1216;
+    font-weight: 600;
+    font-size: 12px;
+    padding: 8px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.preset-save-btn:hover {
+    filter: brightness(1.05);
+}
+
+.preset-card {
+    position: relative;
+}
+
+.preset-card .preset-delete {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    border: 1px solid #2d333a;
+    background: rgba(0,0,0,0.35);
+    color: #a0a8b0;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.preset-card .preset-delete:hover {
+    color: #ff6b6b;
+    border-color: #ff6b6b;
+}
+
+.preset-source {
+    font-size: 10px;
+    color: #6b7580;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
