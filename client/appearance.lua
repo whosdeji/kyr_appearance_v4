@@ -248,13 +248,13 @@ function ApplyClothing(ped, data)
     if data.components then
         for id, v in pairs(data.components) do
             -- Pass whole table so collection is used when present
-            ApplyComponent(ped, id, v)
+            ApplyComponent(ped, tonumber(id) or id, v)
         end
     end
 
     if data.props then
         for id, v in pairs(data.props) do
-            ApplyProp(ped, id, v)
+            ApplyProp(ped, tonumber(id) or id, v)
         end
     end
 end
