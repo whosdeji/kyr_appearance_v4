@@ -95,17 +95,21 @@ local function buildNuiPayload(options)
     local clothingLimits = GetClothingLimits(PlayerPedId())
     local currentClothing = GetCurrentClothing(PlayerPedId())
 
+    -- Faction / global config presets (names only; outfit lives in config)
     local presets = {}
     if mode == 'locker' and factionKey and Config.Factions[factionKey] then
         for name, _ in pairs(Config.Factions[factionKey].presets or {}) do
-            presets[#presets + 1] = name
+            presets[#presets + 1] = { name = name, source = 'faction' }
         end
     else
         for name, _ in pairs(Config.ClothingPresets or {}) do
-            presets[#presets + 1] = name
+            presets[#presets + 1] = { name = name, source = 'global' }
         end
     end
-    table.sort(presets)
+    table.sort(presets, function(a, b) return a.name < b.name end)
+
+    -- Player-owned presets (name + outfit)
+    local playerPresets = lib.callback.await('kyr_appearance:getPlayerPresets', false) or {}
 
     local allowed, allowedProps = nil, nil
     local clothingNames = Config.ClothingNames or { components = {}, props = {} }
@@ -135,6 +139,7 @@ local function buildNuiPayload(options)
         currentClothing = currentClothing,
         clothingNames = normalizeClothingNames(clothingNames),
         presets = presets,
+        playerPresets = playerPresets,
 
         allowed = allowed,
         allowedProps = allowedProps,
@@ -305,7 +310,10 @@ RegisterNUICallback('randomize', function(_, cb)
 end)
 
 RegisterNUICallback('rotate', function(data, cb)
-    RotatePed((data.direction or 1) * Config.RotateStep)
+    -- amount can be a multipler; hold-to-rotate sends frequent small steps
+    local step = Config.RotateStep or 12.0
+    local amount = tonumber(data.amount) or step
+    RotatePed((data.direction or 1) * amount)
     cb(1)
 end)
 
@@ -391,7 +399,11 @@ RegisterNUICallback('applyPreset', function(data, cb)
     local name = data.name
     local ok = false
 
-    if currentMode == 'locker' and currentFaction and Config.Factions[currentFaction] then
+    -- Player-owned preset: outfit payload sent from NUI
+    if data.source == 'player' and type(data.outfit) == 'table' then
+        ApplyClothing(PlayerPedId(), data.outfit)
+        ok = true
+    elseif currentMode == 'locker' and currentFaction and Config.Factions[currentFaction] then
         local preset = Config.Factions[currentFaction].presets[name]
         if preset then
             ApplyClothing(PlayerPedId(), preset)
@@ -406,6 +418,36 @@ RegisterNUICallback('applyPreset', function(data, cb)
     else
         cb({ error = true })
     end
+end)
+
+RegisterNUICallback('savePlayerPreset', function(data, cb)
+    local name = data and data.name
+    if type(name) ~= 'string' or name:gsub('%s+', '') == '' then
+        cb({ ok = false, error = 'bad_name' })
+        return
+    end
+
+    local outfit = GetCurrentClothing(PlayerPedId())
+    lib.callback('kyr_appearance:savePlayerPreset', false, function(result)
+        cb(result or { ok = false })
+    end, name, outfit)
+end)
+
+RegisterNUICallback('deletePlayerPreset', function(data, cb)
+    local name = data and data.name
+    if type(name) ~= 'string' then
+        cb({ ok = false })
+        return
+    end
+    lib.callback('kyr_appearance:deletePlayerPreset', false, function(result)
+        cb(result or { ok = false })
+    end, name)
+end)
+
+RegisterNUICallback('getPlayerPresets', function(_, cb)
+    lib.callback('kyr_appearance:getPlayerPresets', false, function(list)
+        cb({ presets = list or {} })
+    end)
 end)
 
 RegisterNUICallback('save', function(data, cb)
