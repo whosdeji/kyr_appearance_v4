@@ -333,19 +333,30 @@ function RandomizeAppearance(ped)
     ApplyHair(ped, math.random(0, 73), math.random(0, 63), math.random(0, 63))
     ApplyEyeColor(ped, math.random(0, 31))
 
+    -- Do not randomize cosmetic makeup overlays — always clear them
+    local skipRandomOverlay = {
+        makeup = true,
+        blush = true,
+        lipstick = true,
+    }
+
     for _, o in ipairs(Config.HeadOverlays) do
-        local max = GetOverlayMax(o.id)
-        local index = math.random(-1, max)
-        local opacity = index >= 0 and (math.random() * 0.7 + 0.3) or 0.0
+        if skipRandomOverlay[o.key] then
+            ApplyHeadOverlay(ped, o.id, 255, 0.0, nil, nil, nil)
+        else
+            local max = GetOverlayMax(o.id)
+            local index = math.random(-1, max)
+            local opacity = index >= 0 and (math.random() * 0.7 + 0.3) or 0.0
 
-        local colorType, colorIndex, secondColorIndex = nil, nil, nil
-        if o.hasColor and index >= 0 then
-            colorType = (o.key == 'blush' or o.key == 'lipstick') and 2 or 1
-            colorIndex = math.random(0, 63)
-            secondColorIndex = colorIndex
+            local colorType, colorIndex, secondColorIndex = nil, nil, nil
+            if o.hasColor and index >= 0 then
+                colorType = 1
+                colorIndex = math.random(0, 63)
+                secondColorIndex = colorIndex
+            end
+
+            ApplyHeadOverlay(ped, o.id, index, opacity, colorType, colorIndex, secondColorIndex)
         end
-
-        ApplyHeadOverlay(ped, o.id, index, opacity, colorType, colorIndex, secondColorIndex)
     end
 end
 
