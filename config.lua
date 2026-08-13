@@ -98,6 +98,51 @@ Config.ClothingProps = {
     { id = 7, label = 'Bracelet' },
 }
 
+-- Display names keyed by STABLE identity: collection + local drawable (NOT global index).
+-- Empty collection "" = base game collection.
+--
+-- Structure:
+--   components[componentId][collectionName][localDrawable] = "Display Name"
+--   props[propId][collectionName][localDrawable] = "Display Name"
+--
+-- Example:
+-- Config.ClothingNames = {
+--     components = {
+--         [11] = {
+--             ['mp_m_freemode_01_mp_m_usmc'] = {
+--                 [0] = 'USMC Frogman [Wood Untucked]',
+--                 [1] = 'USMC Frogman [Desert Untucked]',
+--             },
+--             [''] = { -- base game
+--                 [15] = 'Default Tee',
+--             },
+--         },
+--     },
+--     props = {
+--         [0] = {
+--             ['mp_m_freemode_01_p_usarmy'] = {
+--                 [3] = 'US Army MICH Helmet V2',
+--             },
+--         },
+--     },
+-- }
+Config.ClothingNames = {
+    components = {
+        -- [11] = {
+        --     ['your_collection_name'] = {
+        --         [0] = 'USMC Frogman [Wood Untucked]',
+        --     },
+        -- },
+    },
+    props = {
+        -- [0] = {
+        --     ['your_prop_collection'] = {
+        --         [0] = 'US Army MICH Helmet V2',
+        --     },
+        -- },
+    },
+}
+
 -- Paste output from /saveoutfit here.
 -- Preferred (stable) format uses collection + local drawable:
 --   [11] = { collection = "mp_m_freemode_01_mp_m_yourpack", drawable = 12, texture = 0 },
