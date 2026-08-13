@@ -124,6 +124,27 @@ local function normalizeClothingNames(src, filterSex)
     return out
 end
 
+--- Read sex from a preset/outfit table. Defaults to 'unisex'.
+local function getOutfitSex(data)
+    if type(data) ~= 'table' then return 'unisex' end
+    local sex = data.sex or data.gender
+    if type(sex) == 'string' then
+        sex = string.lower(sex)
+        if sex == 'male' or sex == 'female' or sex == 'unisex' then
+            return sex
+        end
+    end
+    return 'unisex'
+end
+
+--- Wrap current clothing with the ped's sex (for player presets + share codes).
+local function getClothingWithSex(ped)
+    ped = ped or PlayerPedId()
+    local clothing = GetCurrentClothing(ped)
+    clothing.sex = getPedSex(ped)
+    return clothing
+end
+
 local function buildNuiPayload(options)
     options = options or {}
     local mode = options.mode or 'characterisation'
@@ -147,17 +168,41 @@ local function buildNuiPayload(options)
 
     local presets = {}
     if mode == 'locker' and factionKey and Config.Factions[factionKey] then
-        for name, _ in pairs(Config.Factions[factionKey].presets or {}) do
-            presets[#presets + 1] = { name = name, source = 'faction' }
+        for name, preset in pairs(Config.Factions[factionKey].presets or {}) do
+            if sexAllowed(getOutfitSex(preset), pedSex) then
+                presets[#presets + 1] = {
+                    name = name,
+                    source = 'faction',
+                    sex = getOutfitSex(preset),
+                }
+            end
         end
     else
-        for name, _ in pairs(Config.ClothingPresets or {}) do
-            presets[#presets + 1] = { name = name, source = 'global' }
+        for name, preset in pairs(Config.ClothingPresets or {}) do
+            if sexAllowed(getOutfitSex(preset), pedSex) then
+                presets[#presets + 1] = {
+                    name = name,
+                    source = 'global',
+                    sex = getOutfitSex(preset),
+                }
+            end
         end
     end
     table.sort(presets, function(a, b) return a.name < b.name end)
 
-    local playerPresets = lib.callback.await('kyr_appearance:getPlayerPresets', false) or {}
+    -- Player-owned presets: only show ones that match this ped's sex
+    local rawPlayerPresets = lib.callback.await('kyr_appearance:getPlayerPresets', false) or {}
+    local playerPresets = {}
+    for _, p in ipairs(rawPlayerPresets) do
+        local outfitSex = 'unisex'
+        if type(p.outfit) == 'table' then
+            outfitSex = getOutfitSex(p.outfit)
+        end
+        if sexAllowed(outfitSex, pedSex) then
+            p.sex = outfitSex
+            playerPresets[#playerPresets + 1] = p
+        end
+    end
 
     local allowed, allowedProps = nil, nil
     local clothingNames = Config.ClothingNames or { components = {}, props = {} }
@@ -219,6 +264,7 @@ local function getCatalogItemSex(isProp, slotId, collection, localDrawable)
     local resolved = resolveClothingEntry(raw)
     return (resolved and resolved.sex) or 'unisex'
 end
+
 
 --- options = { mode = 'locker'|'characterisation', faction = 'usmarines' }
 function OpenAppearanceMenu(isNewCharacter, staff, gender, options)
@@ -463,7 +509,7 @@ local function isAllowedSex(componentId, isProp, collection, localDrawable)
         return true
     end
 
-    return entry.sex == GetPedSex(PlayerPedId())
+    return entry.sex == getPedSex(PlayerPedId())
 end
 
 RegisterNUICallback('component', function(data, cb)
@@ -532,29 +578,36 @@ end)
 
 RegisterNUICallback('applyPreset', function(data, cb)
     local name = data.name
-    local ok = false
     local ped = PlayerPedId()
+    local pedSex = getPedSex(ped)
+    local outfitToApply = nil
 
-    -- Player-owned preset: outfit payload sent from NUI
     if data.source == 'player' and type(data.outfit) == 'table' then
-        ApplyClothing(ped, data.outfit)
-        ok = true
+        outfitToApply = data.outfit
     elseif currentMode == 'locker' and currentFaction and Config.Factions[currentFaction] then
-        local preset = Config.Factions[currentFaction].presets[name]
-        if preset then
-            ApplyClothing(ped, preset)
-            ok = true
-        end
+        outfitToApply = Config.Factions[currentFaction].presets and Config.Factions[currentFaction].presets[name]
     else
-        ok = ApplyPreset(ped, name)
+        outfitToApply = Config.ClothingPresets and Config.ClothingPresets[name]
     end
 
-    if not ok then
+    if not outfitToApply then
         cb({ ok = false, error = true })
         return
     end
 
-    -- Let the game apply variations before we read them back
+    local outfitSex = getOutfitSex(outfitToApply)
+    if not sexAllowed(outfitSex, pedSex) then
+        lib.notify({
+            title = 'Outfit',
+            description = ('This outfit is for %s characters only.'):format(outfitSex),
+            type = 'error'
+        })
+        cb({ ok = false, error = 'sex_mismatch' })
+        return
+    end
+
+    ApplyClothing(ped, outfitToApply)
+
     Wait(50)
     ped = PlayerPedId()
     cb({
@@ -579,7 +632,7 @@ RegisterNUICallback('savePlayerPreset', function(data, cb)
         return
     end
 
-    local outfit = GetCurrentClothing(PlayerPedId())
+    local outfit = getClothingWithSex(PlayerPedId())
     lib.callback('kyr_appearance:savePlayerPreset', false, function(result)
         cb(result or { ok = false })
     end, name, outfit)
@@ -598,11 +651,21 @@ end)
 
 RegisterNUICallback('getPlayerPresets', function(_, cb)
     lib.callback('kyr_appearance:getPlayerPresets', false, function(list)
-        cb({ presets = list or {} })
+        local pedSex = getPedSex(PlayerPedId())
+        local filtered = {}
+        for _, p in ipairs(list or {}) do
+            local outfitSex = (type(p.outfit) == 'table') and getOutfitSex(p.outfit) or 'unisex'
+            if sexAllowed(outfitSex, pedSex) then
+                p.sex = outfitSex
+                filtered[#filtered + 1] = p
+            end
+        end
+        cb({ presets = filtered })
     end)
+end)
 
 RegisterNUICallback('createShareCode', function(_, cb)
-    local outfit = GetCurrentClothing(PlayerPedId())
+    local outfit = getClothingWithSex(PlayerPedId())
     lib.callback('kyr_appearance:createShareCode', false, function(result)
         cb(result or { ok = false })
     end, outfit)
@@ -621,9 +684,21 @@ RegisterNUICallback('redeemShareCode', function(data, cb)
             return
         end
 
-        ApplyClothing(PlayerPedId(), result.outfit)
-        Wait(50)
         local ped = PlayerPedId()
+        local outfitSex = getOutfitSex(result.outfit)
+        if not sexAllowed(outfitSex, getPedSex(ped)) then
+            lib.notify({
+                title = 'Share Code',
+                description = ('This outfit is for %s characters only.'):format(outfitSex),
+                type = 'error'
+            })
+            cb({ ok = false, error = 'sex_mismatch' })
+            return
+        end
+
+        ApplyClothing(ped, result.outfit)
+        Wait(50)
+        ped = PlayerPedId()
         cb({
             ok = true,
             code = result.code,
@@ -631,7 +706,6 @@ RegisterNUICallback('redeemShareCode', function(data, cb)
             clothingLimits = GetClothingLimits(ped),
         })
     end, code)
-end)
 end)
 
 RegisterNUICallback('save', function(data, cb)

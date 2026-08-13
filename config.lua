@@ -243,94 +243,94 @@ Config.Factions = {
             components = {
                 [1] = { -- Mask
                     ['r4usarmyv3'] = {
-                        [0] = 'US Army Mask 0', [1] = 'US Army Mask 1',
+                        [0] = { label = 'US Army Mask 0', sex = 'male' }, [1] = { label = 'US Army Mask 1', sex = 'male' },
                     },
                 },
                 [3] = { -- Arms / Torso
                     ['r4usarmyv3'] = {
-                        [0] = 'US Army Arms 0', [1] = 'US Army Arms 1',
+                        [0] = { label = 'US Army Arms 0', sex = 'male' }, [1] = { label = 'US Army Arms 1', sex = 'male' },
                     },
                 },
                 [4] = { -- Legs
                     ['r4usarmyv3'] = {
-                        [0] = 'US Army Legs 0', [1] = 'US Army Legs 1', [2] = 'US Army Legs 2',
+                        [0] = { label = 'US Army Legs 0', sex = 'male' }, [1] = { label = 'US Army Legs 1', sex = 'male' }, [2] = { label = 'US Army Legs 2', sex = 'male' },
                     },
                 },
                 [5] = { -- Bag / Parachute
                     ['r4usarmyv3'] = {
-                        [0] = 'US Army Bag 0', [1] = 'US Army Bag 1', [2] = 'US Army Bag 2', [3] = 'US Army Bag 3',
-                        [4] = 'US Army Bag 4', [5] = 'US Army Bag 5', [6] = 'US Army Bag 6',
+                        [0] = { label = 'US Army Bag 0', sex = 'male' }, [1] = { label = 'US Army Bag 1', sex = 'male' }, [2] = { label = 'US Army Bag 2', sex = 'male' }, [3] = { label = 'US Army Bag 3', sex = 'male' },
+                        [4] = { label = 'US Army Bag 4', sex = 'male' }, [5] = { label = 'US Army Bag 5', sex = 'male' }, [6] = { label = 'US Army Bag 6', sex = 'male' },
                     },
                 },
                 [6] = { -- Shoes
                     ['r4usarmyv3'] = {
-                        [0] = 'US Army Shoes 0',
+                        [0] = { label = 'US Army Shoes 0', sex = 'male' },
                     },
                 },
                 [7] = { -- Accessories
                     ['r4usarmyv3'] = {
-                        [0] = 'US Army Acc 0', [1] = 'US Army Acc 1', [2] = 'US Army Acc 2', [3] = 'US Army Acc 3',
-                        [4] = 'US Army Acc 4', [5] = 'US Army Acc 5', [6] = 'US Army Acc 6', [7] = 'US Army Acc 7',
-                        [8] = 'US Army Acc 8', [9] = 'US Army Acc 9', [10] = 'US Army Acc 10',
+                        [0] = { label = 'US Army Acc 0', sex = 'male' }, [1] = { label = 'US Army Acc 1', sex = 'male' }, [2] = { label = 'US Army Acc 2', sex = 'male' }, [3] = { label = 'US Army Acc 3', sex = 'male' },
+                        [4] = { label = 'US Army Acc 4', sex = 'male' }, [5] = { label = 'US Army Acc 5', sex = 'male' }, [6] = { label = 'US Army Acc 6', sex = 'male' }, [7] = { label = 'US Army Acc 7', sex = 'male' },
+                        [8] = { label = 'US Army Acc 8', sex = 'male' }, [9] = { label = 'US Army Acc 9', sex = 'male' }, [10] = { label = 'US Army Acc 10', sex = 'male' },
                     },
                 },
                 [8] = { -- Undershirt
                     ['r4usarmyv3'] = {
-                        [0] = 'US Army Undershirt 0', [1] = 'US Army Undershirt 1', [2] = 'US Army Undershirt 2', [3] = 'US Army Undershirt 3',
-                        [4] = 'US Army Undershirt 4', [5] = 'US Army Undershirt 5', [6] = 'US Army Undershirt 6', [7] = 'US Army Undershirt 7',
-                        [8] = 'US Army Undershirt 8', [9] = 'US Army Undershirt 9', [10] = 'US Army Undershirt 10', [11] = 'US Army Undershirt 11',
-                        [12] = 'US Army Undershirt 12', [13] = 'US Army Undershirt 13',
+                        [0] = { label = 'US Army Undershirt 0', sex = 'male' }, [1] = { label = 'US Army Undershirt 1', sex = 'male' }, [2] = { label = 'US Army Undershirt 2', sex = 'male' }, [3] = { label = 'US Army Undershirt 3', sex = 'male' },
+                        [4] = { label = 'US Army Undershirt 4', sex = 'male' }, [5] = { label = 'US Army Undershirt 5', sex = 'male' }, [6] = { label = 'US Army Undershirt 6', sex = 'male' }, [7] = { label = 'US Army Undershirt 7', sex = 'male' },
+                        [8] = { label = 'US Army Undershirt 8', sex = 'male' }, [9] = { label = 'US Army Undershirt 9', sex = 'male' }, [10] = { label = 'US Army Undershirt 10', sex = 'male' }, [11] = { label = 'US Army Undershirt 11', sex = 'male' },
+                        [12] = { label = 'US Army Undershirt 12', sex = 'male' }, [13] = { label = 'US Army Undershirt 13', sex = 'male' },
                     },
                 },
                 [9] = { -- Body Armor
                     ['r4usarmyv3'] = {
-                        [0] = 'US Army Vest 0', [1] = 'US Army Vest 1', [2] = 'US Army Vest 2', [3] = 'US Army Vest 3',
-                        [4] = 'US Army Vest 4',
+                        [0] = { label = 'US Army Vest 0', sex = 'male' }, [1] = { label = 'US Army Vest 1', sex = 'male' }, [2] = { label = 'US Army Vest 2', sex = 'male' }, [3] = { label = 'US Army Vest 3', sex = 'male' },
+                        [4] = { label = 'US Army Vest 4', sex = 'male' },
                     },
                 },
                 [10] = { -- Decals
                     ['r4usarmyv3'] = {
-                        [0] = 'US Army Decal 0', [1] = 'US Army Decal 1', [2] = 'US Army Decal 2', [3] = 'US Army Decal 3',
-                        [4] = 'US Army Decal 4', [5] = 'US Army Decal 5', [6] = 'US Army Decal 6', [7] = 'US Army Decal 7',
-                        [8] = 'US Army Decal 8', [9] = 'US Army Decal 9', [10] = 'US Army Decal 10', [11] = 'US Army Decal 11',
-                        [12] = 'US Army Decal 12', [13] = 'US Army Decal 13', [14] = 'US Army Decal 14', [15] = 'US Army Decal 15',
-                        [16] = 'US Army Decal 16', [17] = 'US Army Decal 17', [18] = 'US Army Decal 18', [19] = 'US Army Decal 19',
-                        [20] = 'US Army Decal 20', [21] = 'US Army Decal 21', [22] = 'US Army Decal 22', [23] = 'US Army Decal 23',
-                        [24] = 'US Army Decal 24', [25] = 'US Army Decal 25', [26] = 'US Army Decal 26', [27] = 'US Army Decal 27',
-                        [28] = 'US Army Decal 28', [29] = 'US Army Decal 29', [30] = 'US Army Decal 30', [31] = 'US Army Decal 31',
-                        [32] = 'US Army Decal 32', [33] = 'US Army Decal 33', [34] = 'US Army Decal 34', [35] = 'US Army Decal 35',
-                        [36] = 'US Army Decal 36', [37] = 'US Army Decal 37', [38] = 'US Army Decal 38', [39] = 'US Army Decal 39',
-                        [40] = 'US Army Decal 40',
+                        [0] = { label = 'US Army Decal 0', sex = 'male' }, [1] = { label = 'US Army Decal 1', sex = 'male' }, [2] = { label = 'US Army Decal 2', sex = 'male' }, [3] = { label = 'US Army Decal 3', sex = 'male' },
+                        [4] = { label = 'US Army Decal 4', sex = 'male' }, [5] = { label = 'US Army Decal 5', sex = 'male' }, [6] = { label = 'US Army Decal 6', sex = 'male' }, [7] = { label = 'US Army Decal 7', sex = 'male' },
+                        [8] = { label = 'US Army Decal 8', sex = 'male' }, [9] = { label = 'US Army Decal 9', sex = 'male' }, [10] = { label = 'US Army Decal 10', sex = 'male' }, [11] = { label = 'US Army Decal 11', sex = 'male' },
+                        [12] = { label = 'US Army Decal 12', sex = 'male' }, [13] = { label = 'US Army Decal 13', sex = 'male' }, [14] = { label = 'US Army Decal 14', sex = 'male' }, [15] = { label = 'US Army Decal 15', sex = 'male' },
+                        [16] = { label = 'US Army Decal 16', sex = 'male' }, [17] = { label = 'US Army Decal 17', sex = 'male' }, [18] = { label = 'US Army Decal 18', sex = 'male' }, [19] = { label = 'US Army Decal 19', sex = 'male' },
+                        [20] = { label = 'US Army Decal 20', sex = 'male' }, [21] = { label = 'US Army Decal 21', sex = 'male' }, [22] = { label = 'US Army Decal 22', sex = 'male' }, [23] = { label = 'US Army Decal 23', sex = 'male' },
+                        [24] = { label = 'US Army Decal 24', sex = 'male' }, [25] = { label = 'US Army Decal 25', sex = 'male' }, [26] = { label = 'US Army Decal 26', sex = 'male' }, [27] = { label = 'US Army Decal 27', sex = 'male' },
+                        [28] = { label = 'US Army Decal 28', sex = 'male' }, [29] = { label = 'US Army Decal 29', sex = 'male' }, [30] = { label = 'US Army Decal 30', sex = 'male' }, [31] = { label = 'US Army Decal 31', sex = 'male' },
+                        [32] = { label = 'US Army Decal 32', sex = 'male' }, [33] = { label = 'US Army Decal 33', sex = 'male' }, [34] = { label = 'US Army Decal 34', sex = 'male' }, [35] = { label = 'US Army Decal 35', sex = 'male' },
+                        [36] = { label = 'US Army Decal 36', sex = 'male' }, [37] = { label = 'US Army Decal 37', sex = 'male' }, [38] = { label = 'US Army Decal 38', sex = 'male' }, [39] = { label = 'US Army Decal 39', sex = 'male' },
+                        [40] = { label = 'US Army Decal 40', sex = 'male' },
                     },
                 },
                 [11] = { -- Top / Jacket
                     ['r4usarmyv3'] = {
-                        [0] = 'US Army Top 0', [1] = 'US Army Top 1', [2] = 'US Army Top 2', [3] = 'US Army Top 3',
-                        [4] = 'US Army Top 4', [5] = 'US Army Top 5', [6] = 'US Army Top 6', [7] = 'US Army Top 7',
-                        [8] = 'US Army Top 8', [9] = 'US Army Top 9',
+                        [0] = { label = 'US Army Top 0', sex = 'male' }, [1] = { label = 'US Army Top 1', sex = 'male' }, [2] = { label = 'US Army Top 2', sex = 'male' }, [3] = { label = 'US Army Top 3', sex = 'male' },
+                        [4] = { label = 'US Army Top 4', sex = 'male' }, [5] = { label = 'US Army Top 5', sex = 'male' }, [6] = { label = 'US Army Top 6', sex = 'male' }, [7] = { label = 'US Army Top 7', sex = 'male' },
+                        [8] = { label = 'US Army Top 8', sex = 'male' }, [9] = { label = 'US Army Top 9', sex = 'male' },
                     },
                 },
             },
             props = {
                 [0] = { -- Hat
                     ['r4usarmyv3'] = {
-                        [0] = 'US Army Hat 0', [1] = 'US Army Hat 1', [2] = 'US Army Hat 2', [3] = 'US Army Hat 3',
-                        [4] = 'US Army Hat 4', [5] = 'US Army Hat 5', [6] = 'US Army Hat 6', [7] = 'US Army Hat 7',
-                        [8] = 'US Army Hat 8', [9] = 'US Army Hat 9', [10] = 'US Army Hat 10', [11] = 'US Army Hat 11',
-                        [12] = 'US Army Hat 12', [13] = 'US Army Hat 13', [14] = 'US Army Hat 14', [15] = 'US Army Hat 15',
-                        [16] = 'US Army Hat 16',
+                        [0] = { label = 'US Army Hat 0', sex = 'male' }, [1] = { label = 'US Army Hat 1', sex = 'male' }, [2] = { label = 'US Army Hat 2', sex = 'male' }, [3] = { label = 'US Army Hat 3', sex = 'male' },
+                        [4] = { label = 'US Army Hat 4', sex = 'male' }, [5] = { label = 'US Army Hat 5', sex = 'male' }, [6] = { label = 'US Army Hat 6', sex = 'male' }, [7] = { label = 'US Army Hat 7', sex = 'male' },
+                        [8] = { label = 'US Army Hat 8', sex = 'male' }, [9] = { label = 'US Army Hat 9', sex = 'male' }, [10] = { label = 'US Army Hat 10', sex = 'male' }, [11] = { label = 'US Army Hat 11', sex = 'male' },
+                        [12] = { label = 'US Army Hat 12', sex = 'male' }, [13] = { label = 'US Army Hat 13', sex = 'male' }, [14] = { label = 'US Army Hat 14', sex = 'male' }, [15] = { label = 'US Army Hat 15', sex = 'male' },
+                        [16] = { label = 'US Army Hat 16', sex = 'male' },
                     },
                 },
                 [1] = { -- Glasses
                     ['r4usarmyv3'] = {
-                        [0] = 'US Army Glasses 0', [1] = 'US Army Glasses 1', [2] = 'US Army Glasses 2', [3] = 'US Army Glasses 3',
-                        [4] = 'US Army Glasses 4', [5] = 'US Army Glasses 5', [6] = 'US Army Glasses 6',
+                        [0] = { label = 'US Army Glasses 0', sex = 'male' }, [1] = { label = 'US Army Glasses 1', sex = 'male' }, [2] = { label = 'US Army Glasses 2', sex = 'male' }, [3] = { label = 'US Army Glasses 3', sex = 'male' },
+                        [4] = { label = 'US Army Glasses 4', sex = 'male' }, [5] = { label = 'US Army Glasses 5', sex = 'male' }, [6] = { label = 'US Army Glasses 6', sex = 'male' },
                     },
                 },
                 [2] = { -- Ears
                     ['r4usarmyv3'] = {
-                        [0] = 'US Army Ears 0', [1] = 'US Army Ears 1', [2] = 'US Army Ears 2', [3] = 'US Army Ears 3',
-                        [4] = 'US Army Ears 4', [5] = 'US Army Ears 5', [6] = 'US Army Ears 6',
+                        [0] = { label = 'US Army Ears 0', sex = 'male' }, [1] = { label = 'US Army Ears 1', sex = 'male' }, [2] = { label = 'US Army Ears 2', sex = 'male' }, [3] = { label = 'US Army Ears 3', sex = 'male' },
+                        [4] = { label = 'US Army Ears 4', sex = 'male' }, [5] = { label = 'US Army Ears 5', sex = 'male' }, [6] = { label = 'US Army Ears 6', sex = 'male' },
                     },
                 },
             },
@@ -339,6 +339,7 @@ Config.Factions = {
             -- Legacy global indexes below still apply, but re-run /saveoutfit
             -- while wearing the outfit to convert to collection-stable form.
             ['usarmy_base'] = {
+                sex = 'male',
                 components = {
                     [1] = { drawable = 0, texture = 0 },
                     [3] = { drawable = 0, texture = 0 },
