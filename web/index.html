@@ -29,12 +29,17 @@
         </div>
 
         <div id="tabs">
-            <button class="tab-btn active" data-tab="heritage">Heritage</button>
-            <button class="tab-btn" data-tab="face">Face</button>
-            <button class="tab-btn" data-tab="hair">Hair &amp; Eyes</button>
-            <button class="tab-btn" data-tab="overlays">Overlays</button>
-            <button class="tab-btn" data-tab="clothing">Clothing</button>
-            <button class="tab-btn" data-tab="presets">Presets</button>
+            <!-- Characterisation mode -->
+            <button class="tab-btn tab-char active" data-tab="heritage">Heritage</button>
+            <button class="tab-btn tab-char" data-tab="face">Face</button>
+            <button class="tab-btn tab-char" data-tab="hair">Hair &amp; Eyes</button>
+            <button class="tab-btn tab-char" data-tab="overlays">Overlays</button>
+            <button class="tab-btn tab-char" data-tab="advanced">Clothing</button>
+
+            <!-- Locker mode -->
+            <button class="tab-btn tab-locker" data-tab="clothing" style="display:none;">Clothing</button>
+            <button class="tab-btn tab-locker" data-tab="presets" style="display:none;">Presets</button>
+            <button class="tab-btn tab-locker" data-tab="advanced" style="display:none;">Advanced</button>
         </div>
 
         <div id="tab-content">
@@ -71,7 +76,7 @@
                 <!-- head overlay controls injected here -->
             </div>
 
-            <!-- Clothing: split category | items (locker-style) -->
+            <!-- Locker Clothing: categories | ClothingNames catalog only -->
             <div class="tab-pane" id="tab-clothing">
                 <div id="clothing-layout">
                     <div id="clothing-categories" class="clothing-categories" role="list"></div>
@@ -88,22 +93,24 @@
                         </div>
                     </div>
                 </div>
-                <!-- Legacy slider fallback (characterisation narrow panel) kept for non-locker if needed -->
-                <div id="clothing-legacy" class="hidden">
-                    <div class="section-label">Components</div>
-                    <div id="clothing-components"></div>
-                    <div class="section-label" style="margin-top:1.2rem;">Props</div>
-                    <div id="clothing-props"></div>
-                </div>
             </div>
 
-            <!-- Presets -->
+            <!-- Presets (locker) -->
             <div class="tab-pane" id="tab-presets">
                 <div class="presets-header">
                     <div class="section-label" style="margin:0;">Outfit Presets</div>
                     <p class="presets-hint">Click a preset to equip it instantly</p>
                 </div>
                 <div id="preset-list" class="preset-grid"></div>
+            </div>
+
+            <!-- Advanced: old slider + typed global drawable IDs -->
+            <div class="tab-pane" id="tab-advanced">
+                <div class="section-label">Components</div>
+                <div id="clothing-components"></div>
+
+                <div class="section-label" style="margin-top:1.2rem;">Props</div>
+                <div id="clothing-props"></div>
             </div>
 
         </div>
