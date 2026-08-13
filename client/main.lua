@@ -605,3 +605,11 @@ RegisterCommand('saveoutfit', function(_, args)
         })
     end)
 end, false)
+
+exports('ReapplyAppearance', function()
+    local data = GetCurrentAppearance()
+    if not data or not data.headBlend then return end
+    ApplyHeadBlend(PlayerPedId(), data.headBlend)
+    Wait(50)
+    ApplyHeadBlend(PlayerPedId(), data.headBlend)
+end)
