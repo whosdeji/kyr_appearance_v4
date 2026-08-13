@@ -19,7 +19,8 @@ Config.EditorRoutingBucketBase = 100000 -- actual bucket used is this + player s
 Config.MinZoom = 0.5
 Config.MaxZoom = 2.5
 Config.DefaultZoom = 1.4
-Config.RotateStep = 6.0   -- degrees per button press
+Config.RotateStep = 12.0  -- degrees per rotate tick (hold for continuous)
+Config.MaxPlayerPresets = 20  -- max custom outfits a player can save
 Config.ZoomStep = 0.15
 
 -- ACE permission required to run /characterisation
