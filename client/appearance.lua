@@ -37,10 +37,10 @@ end
 
 local function clamp(n, lo, hi)
     n = tonumber(n)
-    if not n then return lo end
-    if n < lo then return lo end
-    if n > hi then return hi end
-    return n
+    if not n then return lo + 0.0 end
+    if n < lo then return lo + 0.0 end
+    if n > hi then return hi + 0.0 end
+    return n + 0.0
 end
 
 local function normalizeHeadBlend(d)
@@ -85,7 +85,7 @@ end
 
 function ApplyFaceFeature(ped, index, value)
     index = tonumber(index)
-    value = tonumber(value) or 0.0
+    value = (tonumber(value) or 0.0) + 0.0
     if index == nil then return end
     SetPedFaceFeature(ped, index, value)
 
@@ -103,7 +103,7 @@ function ApplyHeadOverlay(ped, overlayId, index, opacity, colorType, colorIndex,
     local idx = tonumber(index)
     if idx == nil or idx < 0 then idx = 255 end
     local op = tonumber(opacity) or 0.0
-
+    op = op + 0.0  -- force float subtype; native reads a bare integer's bits as ~0
     SetPedHeadOverlay(ped, overlayId, idx, op)
 
     if colorType and colorIndex then
