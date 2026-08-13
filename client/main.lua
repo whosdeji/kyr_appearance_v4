@@ -398,26 +398,43 @@ end)
 RegisterNUICallback('applyPreset', function(data, cb)
     local name = data.name
     local ok = false
+    local ped = PlayerPedId()
 
     -- Player-owned preset: outfit payload sent from NUI
     if data.source == 'player' and type(data.outfit) == 'table' then
-        ApplyClothing(PlayerPedId(), data.outfit)
+        ApplyClothing(ped, data.outfit)
         ok = true
     elseif currentMode == 'locker' and currentFaction and Config.Factions[currentFaction] then
         local preset = Config.Factions[currentFaction].presets[name]
         if preset then
-            ApplyClothing(PlayerPedId(), preset)
+            ApplyClothing(ped, preset)
             ok = true
         end
     else
-        ok = ApplyPreset(PlayerPedId(), name)
+        ok = ApplyPreset(ped, name)
     end
 
-    if ok then
-        cb({ clothing = GetCurrentClothing(PlayerPedId()) })
-    else
-        cb({ error = true })
+    if not ok then
+        cb({ ok = false, error = true })
+        return
     end
+
+    -- Let the game apply variations before we read them back
+    Wait(50)
+    ped = PlayerPedId()
+    cb({
+        ok = true,
+        clothing = GetCurrentClothing(ped),
+        clothingLimits = GetClothingLimits(ped),
+    })
+end)
+
+RegisterNUICallback('getClothingState', function(_, cb)
+    local ped = PlayerPedId()
+    cb({
+        clothing = GetCurrentClothing(ped),
+        clothingLimits = GetClothingLimits(ped),
+    })
 end)
 
 RegisterNUICallback('savePlayerPreset', function(data, cb)
