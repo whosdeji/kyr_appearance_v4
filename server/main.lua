@@ -20,6 +20,20 @@ CreateThread(function()
             ADD COLUMN completed TINYINT(1) NOT NULL DEFAULT 0
         ]])
     end)
+
+    -- Player-saved clothing presets (per character)
+    MySQL.query([[
+        CREATE TABLE IF NOT EXISTS character_clothing_presets (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            charId INT UNSIGNED NOT NULL,
+            name VARCHAR(64) NOT NULL,
+            outfit LONGTEXT NOT NULL,
+            UNIQUE KEY character_clothing_presets_unique (charId, name),
+            CONSTRAINT character_clothing_presets_charId_fk
+                FOREIGN KEY (charId) REFERENCES characters(charId)
+                ON DELETE CASCADE ON UPDATE CASCADE
+        )
+    ]])
 end)
 
 -- Returns the appearance ONLY if characterisation was finished
@@ -114,4 +128,79 @@ RegisterNetEvent('kyr_appearance:save', function(appearance)
         player.charId,
         encoded
     })
+end)
+
+-- -------------------- player clothing presets --------------------
+
+lib.callback.register('kyr_appearance:getPlayerPresets', function(source)
+    local player = Ox.GetPlayer(source)
+    if not player or not player.charId then return {} end
+
+    local rows = MySQL.query.await(
+        'SELECT name, outfit FROM character_clothing_presets WHERE charId = ? ORDER BY name ASC',
+        { player.charId }
+    ) or {}
+
+    local list = {}
+    for _, row in ipairs(rows) do
+        local outfit = nil
+        if type(row.outfit) == 'string' then
+            outfit = json.decode(row.outfit)
+        elseif type(row.outfit) == 'table' then
+            outfit = row.outfit
+        end
+        if outfit then
+            list[#list + 1] = { name = row.name, outfit = outfit, source = 'player' }
+        end
+    end
+    return list
+end)
+
+lib.callback.register('kyr_appearance:savePlayerPreset', function(source, name, outfit)
+    local player = Ox.GetPlayer(source)
+    if not player or not player.charId then return { ok = false, error = 'no_char' } end
+    if type(name) ~= 'string' then return { ok = false, error = 'bad_name' } end
+
+    name = name:gsub('^%s+', ''):gsub('%s+$', '')
+    if name == '' or #name > 64 then return { ok = false, error = 'bad_name' } end
+    if type(outfit) ~= 'table' then return { ok = false, error = 'bad_outfit' } end
+
+    local maxPresets = Config.MaxPlayerPresets or 20
+    local count = MySQL.scalar.await(
+        'SELECT COUNT(*) FROM character_clothing_presets WHERE charId = ?',
+        { player.charId }
+    ) or 0
+
+    local exists = MySQL.scalar.await(
+        'SELECT 1 FROM character_clothing_presets WHERE charId = ? AND name = ?',
+        { player.charId, name }
+    )
+
+    if not exists and count >= maxPresets then
+        return { ok = false, error = 'limit', max = maxPresets }
+    end
+
+    MySQL.insert([[
+        INSERT INTO character_clothing_presets (charId, name, outfit)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE outfit = VALUES(outfit)
+    ]], {
+        player.charId,
+        name,
+        json.encode(outfit)
+    })
+
+    return { ok = true, name = name }
+end)
+
+lib.callback.register('kyr_appearance:deletePlayerPreset', function(source, name)
+    local player = Ox.GetPlayer(source)
+    if not player or not player.charId then return { ok = false } end
+    if type(name) ~= 'string' or name == '' then return { ok = false } end
+
+    MySQL.query.await(
+        'DELETE FROM character_clothing_presets WHERE charId = ? AND name = ?',
+        { player.charId, name }
+    )
+    return { ok = true }
 end)
