@@ -92,6 +92,7 @@ local function buildNuiPayload(options)
         clothingProps = Config.ClothingProps,
         clothingLimits = clothingLimits,
         currentClothing = currentClothing,
+        clothingNames = Config.ClothingNames or { components = {}, props = {} },
         presets = presets,
 
         allowed = allowed,
@@ -310,15 +311,33 @@ RegisterNUICallback('eyeColor', function(data, cb)
 end)
 
 RegisterNUICallback('component', function(data, cb)
-    -- NUI still sends global drawable for browsing; ApplyComponent will
-    -- resolve collection + local index after applying so saves stay stable.
-    ApplyComponent(PlayerPedId(), data.id, data.drawable, data.texture)
-    cb(1)
+    -- Catalog items send useCollection=true with collection + local drawable.
+    -- Numeric browser sends only global drawable/texture.
+    if data.useCollection then
+        ApplyComponent(PlayerPedId(), data.id, {
+            collection = data.collection or '',
+            localDrawable = tonumber(data.localDrawable or data.drawable) or 0,
+            drawable = tonumber(data.localDrawable or data.drawable) or 0,
+            texture = data.texture,
+        })
+    else
+        ApplyComponent(PlayerPedId(), data.id, data.drawable, data.texture)
+    end
+    cb({ clothing = GetCurrentClothing(PlayerPedId()) })
 end)
 
 RegisterNUICallback('prop', function(data, cb)
-    ApplyProp(PlayerPedId(), data.id, data.drawable, data.texture)
-    cb(1)
+    if data.useCollection then
+        ApplyProp(PlayerPedId(), data.id, {
+            collection = data.collection or '',
+            localDrawable = tonumber(data.localDrawable or data.drawable) or -1,
+            drawable = tonumber(data.localDrawable or data.drawable) or -1,
+            texture = data.texture,
+        })
+    else
+        ApplyProp(PlayerPedId(), data.id, data.drawable, data.texture)
+    end
+    cb({ clothing = GetCurrentClothing(PlayerPedId()) })
 end)
 
 RegisterNUICallback('getTextureMax', function(data, cb)
