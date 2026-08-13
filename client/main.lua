@@ -274,12 +274,21 @@ RegisterNetEvent('ox:setActiveCharacter', function(character, groups)
                 end
                 Wait(400)
 
-                -- Apply twice: head blend / face features are unreliable on first pass after model swap
                 ApplyFullAppearance(PlayerPedId(), data)
                 Wait(100)
                 ApplyFullAppearance(PlayerPedId(), data)
 
                 TriggerEvent('kyr_appearance:characterReady', character, groups)
+
+                -- Guard against kyr_spawn's positioning/teleport resetting head blend
+                CreateThread(function()
+                    Wait(1500)
+                    if data.headBlend then
+                        ApplyHeadBlend(PlayerPedId(), data.headBlend)
+                        Wait(50)
+                        ApplyHeadBlend(PlayerPedId(), data.headBlend)
+                    end
+                end)
             end)
         end)
     end)
