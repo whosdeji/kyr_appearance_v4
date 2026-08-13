@@ -161,7 +161,7 @@ function OpenAppearanceMenu(isNewCharacter, staff, gender, options)
     if not isNewCharacter then
         savedPosition = getCurrentPosition(ped)
         -- Deep-copy so live edits to currentAppearance cannot mutate the cancel snapshot
-        previousAppearance = json.decode(json.encode(GetCurrentAppearance()))
+        previousAppearance = DeepCopy(GetCurrentAppearance())
     end
 
     TriggerServerEvent('kyr_appearance:enterEditor')
@@ -331,7 +331,15 @@ RegisterNUICallback('setCamFocus', function(data, cb)
 end)
 
 RegisterNUICallback('headBlend', function(data, cb)
-    ApplyHeadBlend(PlayerPedId(), data)
+    -- Merge into existing blend so a partial payload cannot zero other fields
+    local current = GetCurrentAppearance()
+    local merged = current.headBlend or {}
+    if type(data) == 'table' then
+        for k, v in pairs(data) do
+            merged[k] = v
+        end
+    end
+    ApplyHeadBlend(PlayerPedId(), merged)
     cb(1)
 end)
 

@@ -1,6 +1,19 @@
 local currentAppearance = {}
 local lastFullAppearance = nil
 
+--- Safe deep copy (avoids json.encode/decode which can error on some appearance values)
+function DeepCopy(value)
+    if type(value) ~= 'table' then
+        return value
+    end
+    local out = {}
+    for k, v in pairs(value) do
+        out[k] = DeepCopy(v)
+    end
+    return out
+end
+
+
 function ApplyModel(model)
     local hash = type(model) == 'string' and joaat(model) or model
     RequestModel(hash)
@@ -22,60 +35,29 @@ function ApplyModel(model)
     return true
 end
 
-local function normalizeHeadBlend(d)
-    d = d or {}
-    return {
-        shapeFirst  = tonumber(d.shapeFirst) or 0,
-        shapeSecond = tonumber(d.shapeSecond) or 0,
-        shapeThird  = tonumber(d.shapeThird) or 0,
-        skinFirst   = tonumber(d.skinFirst) or 0,
-        skinSecond  = tonumber(d.skinSecond) or 0,
-        skinThird   = tonumber(d.skinThird) or 0,
-        shapeMix    = tonumber(d.shapeMix) or 0.5,
-        skinMix     = tonumber(d.skinMix) or 0.5,
-        thirdMix    = tonumber(d.thirdMix) or 0.0,
-    }
+local function clamp(n, lo, hi)
+    n = tonumber(n)
+    if not n then return lo end
+    if n < lo then return lo end
+    if n > hi then return hi end
+    return n
 end
 
---- Read head blend from the live ped (FiveM native can vary by build).
-local function ReadHeadBlendFromPed(ped)
-    -- Method used by most appearance resources: struct via InvokeNative
-    local ok, blend = pcall(function()
-        -- GetPedHeadBlendData fills a table in some builds
-        local t = {
-            shapeFirst = 0, shapeSecond = 0, shapeThird = 0,
-            skinFirst = 0, skinSecond = 0, skinThird = 0,
-            shapeMix = 0.0, skinMix = 0.0, thirdMix = 0.0,
-        }
-        local success = GetPedHeadBlendData(ped, t)
-        if success ~= false and (t.shapeFirst or t.shapeSecond or t.shapeMix) then
-            return normalizeHeadBlend(t)
-        end
-        return nil
-    end)
-    if ok and blend then return blend end
-
-    -- Fallback: multi-return form
-    ok, blend = pcall(function()
-        local a, b, c, d, e, f, g, h, i = GetPedHeadBlendData(ped)
-        if a == nil then return nil end
-        -- Some builds return (retval, shapeFirst, ...)
-        if type(a) == 'boolean' then
-            return normalizeHeadBlend({
-                shapeFirst = b, shapeSecond = c, shapeThird = d,
-                skinFirst = e, skinSecond = f, skinThird = g,
-                shapeMix = h, skinMix = i,
-            })
-        end
-        return normalizeHeadBlend({
-            shapeFirst = a, shapeSecond = b, shapeThird = c,
-            skinFirst = d, skinSecond = e, skinThird = f,
-            shapeMix = g, skinMix = h, thirdMix = i,
-        })
-    end)
-    if ok and blend then return blend end
-
-    return nil
+local function normalizeHeadBlend(d)
+    d = d or {}
+    -- Parent IDs must be integers; mix values must stay 0.0–1.0 floats.
+    -- Never trust raw ped read-backs that can scramble these.
+    return {
+        shapeFirst  = math.floor(clamp(d.shapeFirst, 0, 45) + 0.5),
+        shapeSecond = math.floor(clamp(d.shapeSecond, 0, 45) + 0.5),
+        shapeThird  = math.floor(clamp(d.shapeThird, 0, 45) + 0.5),
+        skinFirst   = math.floor(clamp(d.skinFirst, 0, 45) + 0.5),
+        skinSecond  = math.floor(clamp(d.skinSecond, 0, 45) + 0.5),
+        skinThird   = math.floor(clamp(d.skinThird, 0, 45) + 0.5),
+        shapeMix    = clamp(d.shapeMix, 0.0, 1.0),
+        skinMix     = clamp(d.skinMix, 0.0, 1.0),
+        thirdMix    = clamp(d.thirdMix, 0.0, 1.0),
+    }
 end
 
 local function syncLastFull(key, value)
@@ -465,24 +447,34 @@ function GetCurrentAppearance()
     }
     currentAppearance.eyeColor = GetPedEyeColor(ped)
 
-    -- Face features from live ped
+    -- Face features from live ped (these natives are reliable)
     currentAppearance.faceFeatures = {}
     for i = 0, 19 do
-        currentAppearance.faceFeatures[tostring(i)] = GetPedFaceFeature(ped, i)
+        local v = GetPedFaceFeature(ped, i)
+        -- Clamp to valid freemode range so we never persist garbage
+        if type(v) ~= 'number' then v = 0.0 end
+        if v < -1.0 then v = -1.0 elseif v > 1.0 then v = 1.0 end
+        currentAppearance.faceFeatures[tostring(i)] = v
     end
 
-    -- Head blend: prefer live ped, then current edits, then last full snapshot
-    local liveBlend = ReadHeadBlendFromPed(ped)
-    if liveBlend then
-        currentAppearance.headBlend = liveBlend
-    elseif currentAppearance.headBlend then
-        -- keep edits already tracked this session
+    -- Head blend: NEVER read back from the ped.
+    -- GetPedHeadBlendData is unreliable across builds and was overwriting the real
+    -- parent/mix values with different numbers on save → face looked "wrong" on rejoin.
+    -- Always use the values we applied this session (or last loaded snapshot).
+    if currentAppearance.headBlend then
         currentAppearance.headBlend = normalizeHeadBlend(currentAppearance.headBlend)
     elseif lastFullAppearance and lastFullAppearance.headBlend then
         currentAppearance.headBlend = normalizeHeadBlend(lastFullAppearance.headBlend)
+    else
+        -- Last resort default (should rarely hit after a proper load/create)
+        currentAppearance.headBlend = normalizeHeadBlend({
+            shapeFirst = 0, shapeSecond = 0, shapeThird = 0,
+            skinFirst = 0, skinSecond = 0, skinThird = 0,
+            shapeMix = 0.5, skinMix = 0.5, thirdMix = 0.0,
+        })
     end
 
-    -- Overlays: keep tracked session data (GTA has no reliable full read-back)
+    -- Overlays: tracked session data only (GTA has no reliable full read-back)
     if not currentAppearance.overlays and lastFullAppearance and lastFullAppearance.overlays then
         currentAppearance.overlays = lastFullAppearance.overlays
     end
@@ -499,12 +491,12 @@ function GetCurrentAppearance()
     lastFullAppearance.props = currentAppearance.props
 
     -- Return a deep copy so callers cannot mutate our tracking tables
-    return json.decode(json.encode(currentAppearance))
+    return DeepCopy(currentAppearance)
 end
 
 function SetCurrentAppearance(data)
-    currentAppearance = data or {}
-    lastFullAppearance = data and json.decode(json.encode(data)) or nil
+    currentAppearance = data and DeepCopy(data) or {}
+    lastFullAppearance = data and DeepCopy(data) or nil
 end
 
 function ApplyFullAppearance(ped, data)
@@ -554,7 +546,7 @@ function ApplyFullAppearance(ped, data)
     end
 
     -- Snapshot for future saves
-    local snapshot = json.decode(json.encode(data))
+    local snapshot = DeepCopy(data)
     currentAppearance = snapshot
-    lastFullAppearance = json.decode(json.encode(data))
+    lastFullAppearance = DeepCopy(data)
 end
