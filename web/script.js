@@ -5,7 +5,38 @@ function post(endpoint, data) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=UTF-8' },
         body: JSON.stringify(data || {})
-    }).then(r => r.json()).catch(() => ({}));
+    }).then(async (r) => {
+        const text = await r.text();
+        if (!text) return {};
+        try { return JSON.parse(text); } catch (_) { return {}; }
+    }).catch(() => ({}));
+}
+
+/** After equipping a preset (or any bulk change), sync Clothing + Advanced UI from live ped. */
+async function refreshClothingUI(fromResponse) {
+    let clothing = fromResponse && fromResponse.clothing;
+    let limits = fromResponse && fromResponse.clothingLimits;
+
+    if (!clothing) {
+        const state = await post('getClothingState', {});
+        clothing = state && state.clothing;
+        limits = state && state.clothingLimits;
+    }
+    if (!clothing) return;
+
+    const data = lastOpenData || {};
+    if (limits) {
+        data.clothingLimits = limits;
+        lastOpenData = data;
+    }
+
+    renderClothing(
+        data.clothingComponents || [],
+        data.clothingProps || [],
+        data.clothingLimits || { components: {}, props: {} },
+        clothing,
+        data.clothingNames || clothingState.clothingNames
+    );
 }
 
 const app = document.getElementById('app');
@@ -993,9 +1024,8 @@ function addPresetCard(container, preset) {
             source: preset.source,
             outfit: preset.outfit || null,
         });
-        if (res && res.clothing) {
-            clothingState.currentClothing = res.clothing;
-        }
+        // Always refresh Clothing + Advanced from server response or live ped state
+        await refreshClothingUI(res);
     });
 
     const del = card.querySelector('.preset-delete');
