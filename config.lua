@@ -298,9 +298,9 @@ Config.Factions = {
                 },
                 [11] = { -- Top / Jacket
                     ['r4usarmyv3'] = {
-                        [0] = 'US Army Top 0', [1] = 'US Army Top 1', [2] = 'US Army Top 2', [3] = 'US Army Top 3',
-                        [4] = 'US Army Top 4', [5] = 'US Army Top 5', [6] = 'US Army Top 6', [7] = 'US Army Top 7',
-                        [8] = 'US Army Top 8', [9] = 'US Army Top 9',
+                        [0] = '[ACU] OCP Coat | Untucked', [1] = '[ACU] OCP Coat | Untucked | Sleeves', [2] = '[ACU] OCP Coat | Tucked', [3] = '[ACU] OCP Coat | Tucked | Sleeves',
+                        [4] = '[IHWCU] OCP Coat | Untucked', [5] = '[IHWCU] OCP Coat | Untucked | Sleeves', [6] = '[IHWCU] OCP Coat | Tucked', [7] = '[IHWCU] OCP Coat | Tucked | Sleeves',
+                        [8] = '[IHWCU] OCP Combat Shirt', [9] = '[IHWCU] OCP Combat Shirt | Unzipped',
                     },
                 },
             },
