@@ -305,9 +305,9 @@ Config.Factions = {
                 },
                 [11] = { -- Top / Jacket
                     ['r4usarmyv3'] = {
-                        [0] = { label = 'US Army Top 0', sex = 'male' }, [1] = { label = 'US Army Top 1', sex = 'male' }, [2] = { label = 'US Army Top 2', sex = 'male' }, [3] = { label = 'US Army Top 3', sex = 'male' },
-                        [4] = { label = 'US Army Top 4', sex = 'male' }, [5] = { label = 'US Army Top 5', sex = 'male' }, [6] = { label = 'US Army Top 6', sex = 'male' }, [7] = { label = 'US Army Top 7', sex = 'male' },
-                        [8] = { label = 'US Army Top 8', sex = 'male' }, [9] = { label = 'US Army Top 9', sex = 'male' },
+                        [0] = { label = '[ACU] OCP COAT | UNTUCKED', sex = 'male' }, [1] = { label = '[ACU] OCP COAT | UNTUCKED | SLEEVES', sex = 'male' }, [2] = { label = '[ACU] OCP COAT | TUCKED', sex = 'male' }, [3] = { label = '[ACU] OCP COAT | TUCKED | SLEEVES', sex = 'male' },
+                        [4] = { label = '[IHWCU] OCP COAT | UNTUCKED', sex = 'male' }, [5] = { label = '[IHWCU] OCP COAT | UNTUCKED | SLEEVES', sex = 'male' }, [6] = { label = '[IHWCU] OCP COAT | TUCKED', sex = 'male' }, [7] = { label = '[IHWCU] OCP COAT | TUCKED | SLEEVES', sex = 'male' },
+                        [8] = { label = '[ACU] OCP COMBAT SHIRT | ZIPPED', sex = 'male' }, [9] = { label = '[IHWCU] OCP COMBAT SHIRT | UNZIPPED', sex = 'male' },
                     },
                 },
             },
