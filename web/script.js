@@ -34,10 +34,38 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 // ---------------------------------------------------------------- camera
 
-document.getElementById('rotate-left').addEventListener('click', () => post('rotate', { direction: -1 }));
-document.getElementById('rotate-right').addEventListener('click', () => post('rotate', { direction: 1 }));
-document.getElementById('zoom-in').addEventListener('click', () => post('zoom', { direction: -1 }));
-document.getElementById('zoom-out').addEventListener('click', () => post('zoom', { direction: 1 }));
+// Hold-to-rotate / hold-to-zoom for smoother camera control
+function bindHoldControl(el, tickFn) {
+    if (!el) return;
+    let timer = null;
+    let active = false;
+
+    const start = (e) => {
+        e.preventDefault();
+        if (active) return;
+        active = true;
+        tickFn();
+        timer = setInterval(tickFn, 50); // ~20 ticks/sec
+    };
+    const stop = () => {
+        active = false;
+        if (timer) {
+            clearInterval(timer);
+            timer = null;
+        }
+    };
+
+    el.addEventListener('mousedown', start);
+    el.addEventListener('touchstart', start, { passive: false });
+    window.addEventListener('mouseup', stop);
+    window.addEventListener('touchend', stop);
+    el.addEventListener('mouseleave', stop);
+}
+
+bindHoldControl(document.getElementById('rotate-left'), () => post('rotate', { direction: -1, amount: 8 }));
+bindHoldControl(document.getElementById('rotate-right'), () => post('rotate', { direction: 1, amount: 8 }));
+bindHoldControl(document.getElementById('zoom-in'), () => post('zoom', { direction: -1 }));
+bindHoldControl(document.getElementById('zoom-out'), () => post('zoom', { direction: 1 }));
 
 document.querySelectorAll('.cam-focus').forEach(btn => {
     btn.addEventListener('click', () => post('setCamFocus', { focus: btn.dataset.focus }));
@@ -576,27 +604,33 @@ async function renderItemList() {
     if (countEl) countEl.textContent = catalog.length > 0 ? `${catalog.length} available` : '0 available';
 
     if (catalog.length === 0) {
-        itemsEl.innerHTML = `
-            <div class="preset-empty" style="padding:24px 16px;">
-                No named items for this slot.<br>
-                Add entries under <strong>Config.ClothingNames</strong>.
-            </div>`;
-        if (texBar) texBar.classList.add('hidden');
-        return;
+        // Still allow None even with no named items
+        // (message shown below None row)
     }
 
-    if (cat.isProp) {
+    // Always offer None (props clear with -1; components use drawable 0 / empty collection)
+    {
+        const isNoneEquipped = cat.isProp
+            ? (cat.curDrawable < 0)
+            : (Number(cat.curDrawable) === 0 && !cat.collection);
         const noneBtn = document.createElement('button');
         noneBtn.type = 'button';
-        noneBtn.className = 'item-row none-row' + (cat.curDrawable < 0 ? ' equipped' : '');
+        noneBtn.className = 'item-row none-row' + (isNoneEquipped ? ' equipped' : '');
         noneBtn.innerHTML = `
             <span class="item-icon">${I.none}</span>
             <span class="item-meta">
                 <div class="item-name">None</div>
-                <div class="item-badge">${cat.curDrawable < 0 ? 'Equipped' : 'Leave this slot empty'}</div>
+                <div class="item-badge">${isNoneEquipped ? 'Equipped' : 'Clear this slot'}</div>
             </span>
         `;
-        noneBtn.addEventListener('click', () => equipCatalogItem(cat, { collection: '', localDrawable: -1 }, 0));
+        noneBtn.addEventListener('click', () => {
+            if (cat.isProp) {
+                equipCatalogItem(cat, { collection: '', localDrawable: -1 }, 0);
+            } else {
+                // Component "none" → global drawable 0 (typical freemode bare / empty look)
+                equipGlobalItem(cat, 0, 0);
+            }
+        });
         itemsEl.appendChild(noneBtn);
     }
 
@@ -618,6 +652,14 @@ async function renderItemList() {
         });
         itemsEl.appendChild(row);
     });
+
+    if (catalog.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'preset-empty';
+        empty.style.padding = '16px';
+        empty.innerHTML = 'No named items for this slot.<br>Add entries under <strong>Config.Factions.*.clothingNames</strong>.';
+        itemsEl.appendChild(empty);
+    }
 
     const equippedRow = itemsEl.querySelector('.item-row.equipped');
     if (equippedRow) {
@@ -875,66 +917,136 @@ function renderAdvancedClothing(components, props, limits, currentClothing) {
     });
 }
 
-function renderPresets(presets) {
+function renderPresets(presets, playerPresets) {
     const container = document.getElementById('preset-list');
     if (!container) return;
     container.innerHTML = '';
 
-    if (!presets || presets.length === 0) {
+    const factionList = Array.isArray(presets) ? presets : [];
+    const playerList = Array.isArray(playerPresets) ? playerPresets : [];
+
+    // Normalize faction entries to objects
+    const factionCards = factionList.map(p => {
+        if (typeof p === 'string') return { name: p, source: 'faction' };
+        return { name: p.name, source: p.source || 'faction', outfit: p.outfit };
+    });
+
+    if (factionCards.length === 0 && playerList.length === 0) {
         container.innerHTML = `
             <div class="preset-empty">
-                No presets defined yet.<br>
-                Staff can use <strong>/saveoutfit name</strong> while wearing an outfit.
+                No presets yet.<br>
+                Save your current outfit above.
             </div>`;
         return;
     }
 
-    presets.forEach(name => {
-        const card = document.createElement('button');
-        card.type = 'button';
-        card.className = 'preset-card';
-        card.dataset.name = name;
-        card.innerHTML = `
-            <span class="preset-icon">${I.outfit}</span>
-            <span class="preset-info">
-                <div class="preset-name">${name}</div>
-                <div class="preset-status">Click to equip</div>
-            </span>
-        `;
-        card.addEventListener('click', async () => {
-            // Instant visual feedback
-            container.querySelectorAll('.preset-card').forEach(c => {
-                c.classList.remove('applying', 'equipped');
-                const st = c.querySelector('.preset-status');
-                if (st) st.textContent = 'Click to equip';
-            });
-            card.classList.add('applying');
-            const status = card.querySelector('.preset-status');
-            if (status) status.textContent = 'Applying…';
+    const section = (title) => {
+        const h = document.createElement('div');
+        h.className = 'section-label';
+        h.style.gridColumn = '1 / -1';
+        h.style.margin = '8px 0 4px';
+        h.textContent = title;
+        container.appendChild(h);
+    };
 
-            const res = await post('applyPreset', { name });
+    if (factionCards.length) {
+        section('Unit presets');
+        factionCards.forEach(p => addPresetCard(container, p));
+    }
+    if (playerList.length) {
+        section('Your presets');
+        playerList.forEach(p => addPresetCard(container, {
+            name: p.name,
+            source: 'player',
+            outfit: p.outfit,
+        }));
+    }
+}
 
-            card.classList.remove('applying');
-            if (res && !res.error) {
-                card.classList.add('equipped');
-                if (status) status.textContent = 'Equipped';
-                // Refresh clothing UI from server response
-                if (res.clothing) {
-                    const data = lastOpenData || {};
-                    renderClothing(
-                        data.clothingComponents || [],
-                        data.clothingProps || [],
-                        data.clothingLimits || { components: {}, props: {} },
-                        res.clothing,
-                        data.clothingNames || clothingState.clothingNames
-                    );
-                }
-            } else {
-                if (status) status.textContent = 'Failed — try again';
+function addPresetCard(container, preset) {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'preset-card';
+    card.innerHTML = `
+        <span class="preset-icon">${I.outfit}</span>
+        <span class="preset-info">
+            <div class="preset-name">${preset.name}</div>
+            <div class="preset-source">${preset.source === 'player' ? 'Yours' : 'Unit'}</div>
+            <div class="preset-status">Click to equip</div>
+        </span>
+        ${preset.source === 'player' ? '<span class="preset-delete" title="Delete">×</span>' : ''}
+    `;
+
+    card.addEventListener('click', async (e) => {
+        if (e.target && e.target.classList.contains('preset-delete')) return;
+        container.querySelectorAll('.preset-card').forEach(c => {
+            c.classList.remove('equipped');
+            const st = c.querySelector('.preset-status');
+            if (st) st.textContent = 'Click to equip';
+        });
+        card.classList.add('equipped');
+        const status = card.querySelector('.preset-status');
+        if (status) status.textContent = 'Equipped';
+
+        const res = await post('applyPreset', {
+            name: preset.name,
+            source: preset.source,
+            outfit: preset.outfit || null,
+        });
+        if (res && res.clothing) {
+            clothingState.currentClothing = res.clothing;
+        }
+    });
+
+    const del = card.querySelector('.preset-delete');
+    if (del) {
+        del.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const res = await post('deletePlayerPreset', { name: preset.name });
+            if (res && res.ok) {
+                // refresh player list
+                const list = await post('getPlayerPresets', {});
+                lastOpenData.playerPresets = (list && list.presets) || [];
+                renderPresets(lastOpenData.presets || [], lastOpenData.playerPresets);
             }
         });
-        container.appendChild(card);
+    }
+
+    container.appendChild(card);
+}
+
+function bindPresetSave() {
+    const btn = document.getElementById('btn-save-preset');
+    const input = document.getElementById('preset-name-input');
+    if (!btn || btn.dataset.bound) return;
+    btn.dataset.bound = '1';
+
+    btn.addEventListener('click', async () => {
+        const name = (input && input.value || '').trim();
+        if (!name) {
+            if (input) input.focus();
+            return;
+        }
+        btn.disabled = true;
+        const res = await post('savePlayerPreset', { name });
+        btn.disabled = false;
+        if (res && res.ok) {
+            if (input) input.value = '';
+            const list = await post('getPlayerPresets', {});
+            lastOpenData.playerPresets = (list && list.presets) || [];
+            renderPresets(lastOpenData.presets || [], lastOpenData.playerPresets);
+        } else if (res && res.error === 'limit') {
+            // keep silent or show in status — limit reached
+            btn.textContent = 'Limit reached';
+            setTimeout(() => { btn.textContent = 'Save current'; }, 1500);
+        }
     });
+
+    if (input) {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') btn.click();
+        });
+    }
 }
 
 // ---------------------------------------------------------------- footer
@@ -1010,7 +1122,8 @@ window.addEventListener('message', event => {
             data.currentClothing || { components: {}, props: {} },
             data.clothingNames
         );
-        renderPresets(data.presets || []);
+        bindPresetSave();
+        renderPresets(data.presets || [], data.playerPresets || []);
 
         // Cancel visible for staff OR locker mode
         document.getElementById('btn-cancel').classList.toggle(
