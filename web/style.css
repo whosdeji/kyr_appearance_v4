@@ -58,7 +58,7 @@ html, body {
     position: absolute;
     top: 0;
     right: 0;
-    width: 360px;
+    width: 440px;
     height: 100%;
     background: linear-gradient(180deg, rgba(10,13,16,0.94) 0%, rgba(10,13,16,0.90) 100%);
     border-left: 1px solid #2d333a;
@@ -69,12 +69,12 @@ html, body {
 
 /* Wider panel in locker mode for split clothing UI */
 #panel.locker-mode {
-    width: 520px;
+    width: 640px;
 }
 
 #panel-header {
-    padding: 18px 20px;
-    font-size: 14px;
+    padding: 20px 22px;
+    font-size: 15px;
     font-weight: 700;
     letter-spacing: 2px;
     color: #9fe870;
@@ -88,17 +88,18 @@ html, body {
 }
 
 .tab-btn {
-    flex: 1;
-    min-width: 60px;
-    padding: 12px 4px;
+    flex: 1 1 auto;
+    min-width: 72px;
+    padding: 14px 8px;
     background: transparent;
     border: none;
     color: #74808c;
-    font-size: 11px;
-    letter-spacing: 1px;
+    font-size: 12px;
+    letter-spacing: 0.8px;
     text-transform: uppercase;
     cursor: pointer;
     border-bottom: 2px solid transparent;
+    white-space: nowrap;
 }
 
 .tab-btn.active {
@@ -118,7 +119,7 @@ html, body {
     display: none;
     flex: 1;
     overflow-y: auto;
-    padding: 16px 20px;
+    padding: 18px 22px;
 }
 
 .tab-pane.active {
@@ -132,6 +133,12 @@ html, body {
     flex-direction: column;
     padding: 0;
     overflow: hidden;
+}
+
+#tab-advanced.active {
+    display: block;
+    overflow-y: auto;
+    padding: 18px 22px;
 }
 
 .section-label {
@@ -148,32 +155,36 @@ html, body {
 
 .slider-row {
     display: grid;
-    grid-template-columns: 110px 1fr 48px;
+    grid-template-columns: 130px 1fr 56px;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
+    gap: 10px;
+    margin-bottom: 12px;
 }
 
 .slider-row label {
-    font-size: 12px;
+    font-size: 13px;
     color: #b7bfc7;
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .slider-row .val {
-    font-size: 11px;
+    font-size: 12px;
     color: #74808c;
     text-align: right;
 }
 
 .val-input {
-    width: 42px;
+    width: 52px;
     background: #1c2126;
     border: 1px solid #2d333a;
     border-radius: 3px;
     color: #9fe870;
-    font-size: 11px;
+    font-size: 12px;
     text-align: center;
-    padding: 2px 0;
+    padding: 3px 2px;
     -moz-appearance: textfield;
 }
 
@@ -261,21 +272,21 @@ html, body {
 }
 
 .clothing-categories {
-    width: 180px;
+    width: 210px;
     flex-shrink: 0;
     overflow-y: auto;
     border-right: 1px solid #2d333a;
     background: rgba(0,0,0,0.25);
-    padding: 8px 0;
+    padding: 10px 0;
 }
 
 .cat-item {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 2px;
+    gap: 3px;
     width: 100%;
-    padding: 10px 14px;
+    padding: 12px 16px;
     border: none;
     border-left: 3px solid transparent;
     background: transparent;
@@ -291,19 +302,19 @@ html, body {
 }
 
 .cat-item.active {
-    background: rgba(200, 60, 60, 0.18);
-    border-left-color: #e04545;
+    background: rgba(159, 232, 112, 0.18);
+    border-left-color: #9fe870;
     color: #ffffff;
 }
 
 .cat-item .cat-label {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     letter-spacing: 0.3px;
 }
 
 .cat-item .cat-sub {
-    font-size: 11px;
+    font-size: 12px;
     color: #6b7580;
     white-space: nowrap;
     overflow: hidden;
@@ -312,7 +323,7 @@ html, body {
 }
 
 .cat-item.active .cat-sub {
-    color: #c9a0a0;
+    color: #b8d99a;
 }
 
 .clothing-items-panel {
@@ -337,7 +348,7 @@ html, body {
     font-weight: 700;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: #e04545;
+    color: #9fe870;
 }
 
 .items-count {
@@ -372,12 +383,13 @@ html, body {
 }
 
 .item-row.equipped {
-    background: rgba(200, 60, 60, 0.15);
-    border-left-color: #e04545;
+    background: rgba(159, 232, 112, 0.15);
+    border-left-color: #9fe870;
     color: #fff;
 }
 
-.item-row .item-icon {
+.item-row .item-icon,
+.preset-icon {
     width: 28px;
     height: 28px;
     border-radius: 4px;
@@ -386,14 +398,20 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
     flex-shrink: 0;
     color: #8a949e;
 }
 
+.item-row .item-icon .ui-icon,
+.preset-icon .ui-icon {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
 .item-row.equipped .item-icon {
-    border-color: #e04545;
-    color: #e04545;
+    border-color: #9fe870;
+    color: #9fe870;
 }
 
 .item-row .item-meta {
@@ -411,7 +429,7 @@ html, body {
 
 .item-row .item-badge {
     font-size: 10px;
-    color: #e04545;
+    color: #9fe870;
     text-transform: uppercase;
     letter-spacing: 0.8px;
     margin-top: 2px;
@@ -453,7 +471,7 @@ html, body {
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #e04545;
+    background: #9fe870;
     cursor: pointer;
     border: 2px solid #0f1216;
 }
@@ -512,11 +530,11 @@ html, body {
 }
 
 .preset-card.equipped {
-    border-color: #e04545;
-    background: rgba(200, 60, 60, 0.12);
+    border-color: #9fe870;
+    background: rgba(159, 232, 112, 0.12);
 }
 
-.preset-icon {
+.preset-card .preset-icon {
     width: 40px;
     height: 40px;
     border-radius: 6px;
@@ -525,12 +543,17 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
     flex-shrink: 0;
+    color: #8a949e;
+}
+
+.preset-card .preset-icon .ui-icon {
+    width: 20px;
+    height: 20px;
 }
 
 .preset-card.equipped .preset-icon {
-    border-color: #e04545;
+    border-color: #9fe870;
 }
 
 .preset-info {
@@ -553,7 +576,7 @@ html, body {
 }
 
 .preset-card.equipped .preset-status {
-    color: #e04545;
+    color: #9fe870;
 }
 
 .preset-empty {
