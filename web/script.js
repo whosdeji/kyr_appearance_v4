@@ -347,90 +347,462 @@ function pushOverlay(o, existing) {
     });
 }
 
-// ---------------------------------------------------------------- clothing
+// ---------------------------------------------------------------- clothing (category | items)
 
-function renderClothing(components, props, limits, currentClothing) {
-    const compContainer = document.getElementById('clothing-components');
-    const propContainer = document.getElementById('clothing-props');
-    if (!compContainer || !propContainer) return;
+const CAT_ICONS = {
+    'Mask': '🎭', 'Arms / Torso': '💪', 'Legs': '👖', 'Bag / Parachute': '🎒',
+    'Shoes': '👟', 'Accessories': '📿', 'Undershirt': '👕', 'Body Armor': '🦺',
+    'Decals': '🎖️', 'Top / Jacket': '🧥', 'Hat': '🎩', 'Glasses': '👓',
+    'Ears': '👂', 'Watch': '⌚', 'Bracelet': '💍',
+};
 
-    compContainer.innerHTML = '';
-    propContainer.innerHTML = '';
+let clothingState = {
+    categories: [],       // { key, label, isProp, id, maxDrawable, curDrawable, curTexture, collection, localDrawable }
+    selectedKey: null,
+    currentClothing: { components: {}, props: {} },
+    clothingNames: { components: {}, props: {} },
+    textureMaxCache: {},
+};
+
+function clothingKey(isProp, id) {
+    return (isProp ? 'p' : 'c') + id;
+}
+
+/** Lookup display name by collection + local drawable (stable identity). */
+function lookupClothingName(isProp, slotId, collection, localDrawable) {
+    const root = clothingState.clothingNames || {};
+    const bucket = isProp ? (root.props || {}) : (root.components || {});
+    const bySlot = bucket[slotId] || bucket[String(slotId)];
+    if (!bySlot) return null;
+    const col = collection == null ? '' : String(collection);
+    const byCol = bySlot[col];
+    if (!byCol) return null;
+    const name = byCol[localDrawable] ?? byCol[String(localDrawable)];
+    return name || null;
+}
+
+/** Flatten Config.ClothingNames entries for a slot into a list of catalog items. */
+function getCatalogItems(isProp, slotId) {
+    const root = clothingState.clothingNames || {};
+    const bucket = isProp ? (root.props || {}) : (root.components || {});
+    const bySlot = bucket[slotId] || bucket[String(slotId)];
+    if (!bySlot) return [];
+
+    const items = [];
+    for (const collection of Object.keys(bySlot)) {
+        const locals = bySlot[collection] || {};
+        for (const localKey of Object.keys(locals)) {
+            const localDrawable = Number(localKey);
+            if (Number.isNaN(localDrawable)) continue;
+            items.push({
+                collection,
+                localDrawable,
+                label: locals[localKey],
+            });
+        }
+    }
+    items.sort((a, b) => {
+        if (a.collection !== b.collection) return a.collection.localeCompare(b.collection);
+        return a.localDrawable - b.localDrawable;
+    });
+    return items;
+}
+
+function buildCategories(components, props, limits, currentClothing) {
+    const cats = [];
 
     (components || []).forEach(c => {
         const id = String(c.id);
         const cur = (currentClothing.components && currentClothing.components[id]) || { drawable: 0, texture: 0 };
         const maxDrawable = (limits.components && limits.components[id] && limits.components[id].maxDrawable) || 0;
-
-        const block = document.createElement('div');
-        block.className = 'overlay-block';
-
-        const label = document.createElement('div');
-        label.className = 'section-label';
-        label.textContent = c.label;
-        block.appendChild(label);
-
-        const drawableRow = makeSliderRow('Drawable', 0, maxDrawable, 1, cur.drawable, (value) => {
-            cur.drawable = Number(value);
-            post('component', { id: c.id, drawable: cur.drawable, texture: cur.texture });
+        const collection = cur.collection || '';
+        const localDrawable = cur.localDrawable !== undefined ? Number(cur.localDrawable) : Number(cur.drawable) || 0;
+        cats.push({
+            key: clothingKey(false, c.id),
+            label: c.label,
+            isProp: false,
+            id: c.id,
+            maxDrawable,
+            curDrawable: Number(cur.drawable) || 0,
+            curTexture: Number(cur.texture) || 0,
+            collection,
+            localDrawable,
         });
-        block.appendChild(drawableRow);
-
-        const textureRow = makeSliderRow('Texture', 0, 25, 1, cur.texture, (value) => {
-            cur.texture = Number(value);
-            post('component', { id: c.id, drawable: cur.drawable, texture: cur.texture });
-        });
-        block.appendChild(textureRow);
-
-        compContainer.appendChild(block);
     });
 
     (props || []).forEach(p => {
         const id = String(p.id);
         const cur = (currentClothing.props && currentClothing.props[id]) || { drawable: -1, texture: 0 };
         const maxDrawable = (limits.props && limits.props[id] && limits.props[id].maxDrawable) || 0;
-
-        const block = document.createElement('div');
-        block.className = 'overlay-block';
-
-        const label = document.createElement('div');
-        label.className = 'section-label';
-        label.textContent = p.label;
-        block.appendChild(label);
-
-        const drawableRow = makeSliderRow('Drawable (-1 = none)', -1, maxDrawable, 1, cur.drawable, (value) => {
-            cur.drawable = Number(value);
-            post('prop', { id: p.id, drawable: cur.drawable, texture: cur.texture });
+        const collection = cur.collection || '';
+        const localDrawable = cur.localDrawable !== undefined ? Number(cur.localDrawable) : (cur.drawable === undefined ? -1 : Number(cur.drawable));
+        cats.push({
+            key: clothingKey(true, p.id),
+            label: p.label,
+            isProp: true,
+            id: p.id,
+            maxDrawable,
+            curDrawable: cur.drawable === undefined ? -1 : Number(cur.drawable),
+            curTexture: Number(cur.texture) || 0,
+            collection,
+            localDrawable,
         });
-        block.appendChild(drawableRow);
-
-        const textureRow = makeSliderRow('Texture', 0, 25, 1, cur.texture, (value) => {
-            cur.texture = Number(value);
-            post('prop', { id: p.id, drawable: cur.drawable, texture: cur.texture });
-        });
-        block.appendChild(textureRow);
-
-        propContainer.appendChild(block);
     });
+
+    return cats;
+}
+
+function categorySubtitle(cat) {
+    if (cat.isProp && cat.curDrawable < 0) return 'None';
+    const named = lookupClothingName(cat.isProp, cat.id, cat.collection, cat.localDrawable);
+    if (named) return named;
+    if (cat.collection) return `${cat.collection} #${cat.localDrawable}`;
+    return `Item ${cat.curDrawable}`;
+}
+
+function renderCategoryList() {
+    const container = document.getElementById('clothing-categories');
+    if (!container) return;
+    container.innerHTML = '';
+
+    clothingState.categories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'cat-item' + (clothingState.selectedKey === cat.key ? ' active' : '');
+        btn.dataset.key = cat.key;
+
+        const sub = categorySubtitle(cat);
+
+        btn.innerHTML = `
+            <span class="cat-label">${cat.label}</span>
+            <span class="cat-sub" title="${sub}">${sub}</span>
+        `;
+        btn.addEventListener('click', () => selectCategory(cat.key));
+        container.appendChild(btn);
+    });
+}
+
+function selectCategory(key) {
+    clothingState.selectedKey = key;
+    renderCategoryList();
+    renderItemList();
+}
+
+function isCatalogItemEquipped(cat, item) {
+    if (cat.curDrawable < 0 && item.localDrawable < 0) return true;
+    return (
+        String(cat.collection || '') === String(item.collection || '') &&
+        Number(cat.localDrawable) === Number(item.localDrawable)
+    );
+}
+
+async function renderItemList() {
+    const itemsEl = document.getElementById('clothing-items');
+    const titleEl = document.getElementById('clothing-items-title');
+    const countEl = document.getElementById('clothing-items-count');
+    const texBar = document.getElementById('clothing-texture-bar');
+    if (!itemsEl || !titleEl) return;
+
+    const cat = clothingState.categories.find(c => c.key === clothingState.selectedKey);
+    if (!cat) {
+        titleEl.textContent = 'Select a category';
+        if (countEl) countEl.textContent = '';
+        itemsEl.innerHTML = '';
+        if (texBar) texBar.classList.add('hidden');
+        return;
+    }
+
+    titleEl.textContent = cat.label;
+    itemsEl.innerHTML = '';
+
+    const catalog = getCatalogItems(cat.isProp, cat.id);
+    const icon = CAT_ICONS[cat.label] || '👕';
+
+    // Prefer named catalog (collection + local drawable). Fallback: numeric global browser.
+    if (catalog.length > 0) {
+        if (countEl) countEl.textContent = `${catalog.length} available`;
+
+        if (cat.isProp) {
+            const noneBtn = document.createElement('button');
+            noneBtn.type = 'button';
+            noneBtn.className = 'item-row none-row' + (cat.curDrawable < 0 ? ' equipped' : '');
+            noneBtn.innerHTML = `
+                <span class="item-icon">○</span>
+                <span class="item-meta">
+                    <div class="item-name">None</div>
+                    <div class="item-badge">${cat.curDrawable < 0 ? 'Equipped' : 'Leave this slot empty'}</div>
+                </span>
+            `;
+            noneBtn.addEventListener('click', () => equipCatalogItem(cat, { collection: '', localDrawable: -1 }, 0));
+            itemsEl.appendChild(noneBtn);
+        }
+
+        catalog.forEach(item => {
+            const equipped = isCatalogItemEquipped(cat, item);
+            const row = document.createElement('button');
+            row.type = 'button';
+            row.className = 'item-row' + (equipped ? ' equipped' : '');
+            row.innerHTML = `
+                <span class="item-icon">${icon}</span>
+                <span class="item-meta">
+                    <div class="item-name">${item.label}</div>
+                    <div class="item-badge">${equipped ? 'Equipped' : ''}</div>
+                </span>
+            `;
+            row.addEventListener('click', () => {
+                const tex = equipped ? cat.curTexture : 0;
+                equipCatalogItem(cat, item, tex);
+            });
+            itemsEl.appendChild(row);
+        });
+    } else {
+        // No names configured — numeric global list (legacy browser)
+        const minD = cat.isProp ? -1 : 0;
+        const total = Math.max(0, cat.maxDrawable - minD + 1);
+        if (countEl) countEl.textContent = `${total} available`;
+
+        if (cat.isProp) {
+            const noneBtn = document.createElement('button');
+            noneBtn.type = 'button';
+            noneBtn.className = 'item-row none-row' + (cat.curDrawable < 0 ? ' equipped' : '');
+            noneBtn.innerHTML = `
+                <span class="item-icon">○</span>
+                <span class="item-meta">
+                    <div class="item-name">None</div>
+                    <div class="item-badge">${cat.curDrawable < 0 ? 'Equipped' : 'Leave this slot empty'}</div>
+                </span>
+            `;
+            noneBtn.addEventListener('click', () => equipGlobalItem(cat, -1, 0));
+            itemsEl.appendChild(noneBtn);
+        }
+
+        const maxShow = Math.min(cat.maxDrawable, 400);
+        for (let d = 0; d <= maxShow; d++) {
+            const equipped = cat.curDrawable === d;
+            const row = document.createElement('button');
+            row.type = 'button';
+            row.className = 'item-row' + (equipped ? ' equipped' : '');
+            row.innerHTML = `
+                <span class="item-icon">${icon}</span>
+                <span class="item-meta">
+                    <div class="item-name">${cat.label} #${d}</div>
+                    <div class="item-badge">${equipped ? 'Equipped' : ''}</div>
+                </span>
+            `;
+            row.addEventListener('click', () => equipGlobalItem(cat, d, equipped ? cat.curTexture : 0));
+            itemsEl.appendChild(row);
+        }
+    }
+
+    const equippedRow = itemsEl.querySelector('.item-row.equipped');
+    if (equippedRow) {
+        requestAnimationFrame(() => equippedRow.scrollIntoView({ block: 'nearest' }));
+    }
+
+    await updateTextureBar(cat);
+}
+
+async function updateTextureBar(cat) {
+    const texBar = document.getElementById('clothing-texture-bar');
+    const range = document.getElementById('clothing-texture-range');
+    const valEl = document.getElementById('clothing-texture-val');
+    if (!texBar || !range) return;
+
+    if (cat.curDrawable < 0) {
+        texBar.classList.add('hidden');
+        return;
+    }
+
+    // Texture max uses global drawable currently worn on the ped
+    const res = await post('getTextureMax', {
+        isProp: cat.isProp,
+        id: cat.id,
+        drawable: cat.curDrawable,
+    });
+    const maxT = (res && res.max !== undefined) ? Number(res.max) : 0;
+    clothingState.textureMaxCache[cat.key] = maxT;
+
+    range.min = 0;
+    range.max = Math.max(0, maxT);
+    range.value = Math.min(cat.curTexture, maxT);
+    if (valEl) valEl.textContent = range.value;
+
+    texBar.classList.toggle('hidden', maxT <= 0 && cat.curTexture === 0);
+    if (maxT > 0) texBar.classList.remove('hidden');
+}
+
+function syncCategoryFromClothing(cat, clothing) {
+    if (!clothing) return;
+    const bag = cat.isProp ? clothing.props : clothing.components;
+    if (!bag) return;
+    const cur = bag[String(cat.id)] || bag[cat.id];
+    if (!cur) return;
+    cat.curDrawable = cur.drawable === undefined ? cat.curDrawable : Number(cur.drawable);
+    cat.curTexture = cur.texture === undefined ? cat.curTexture : Number(cur.texture);
+    cat.collection = cur.collection || '';
+    cat.localDrawable = cur.localDrawable !== undefined ? Number(cur.localDrawable) : cat.localDrawable;
+}
+
+/** Equip by collection + local drawable (stable). */
+async function equipCatalogItem(cat, item, texture) {
+    cat.collection = item.collection || '';
+    cat.localDrawable = item.localDrawable;
+    cat.curTexture = texture || 0;
+
+    renderCategoryList();
+    renderItemList();
+
+    const payload = {
+        id: cat.id,
+        useCollection: true,
+        collection: item.collection || '',
+        localDrawable: item.localDrawable,
+        drawable: item.localDrawable,
+        texture: cat.curTexture,
+    };
+
+    const res = cat.isProp ? await post('prop', payload) : await post('component', payload);
+    if (res && res.clothing) {
+        clothingState.currentClothing = res.clothing;
+        syncCategoryFromClothing(cat, res.clothing);
+        renderCategoryList();
+        renderItemList();
+    }
+
+    await updateTextureBar(cat);
+}
+
+/** Equip by global drawable (fallback when no catalog names). */
+async function equipGlobalItem(cat, drawable, texture) {
+    cat.curDrawable = drawable;
+    cat.curTexture = texture || 0;
+    cat.collection = '';
+    cat.localDrawable = drawable;
+
+    renderCategoryList();
+    renderItemList();
+
+    const res = cat.isProp
+        ? await post('prop', { id: cat.id, drawable, texture: cat.curTexture })
+        : await post('component', { id: cat.id, drawable, texture: cat.curTexture });
+
+    if (res && res.clothing) {
+        clothingState.currentClothing = res.clothing;
+        syncCategoryFromClothing(cat, res.clothing);
+        renderCategoryList();
+        renderItemList();
+    }
+
+    await updateTextureBar(cat);
+}
+
+function bindTextureBar() {
+    const range = document.getElementById('clothing-texture-range');
+    const valEl = document.getElementById('clothing-texture-val');
+    if (!range || range.dataset.bound) return;
+    range.dataset.bound = '1';
+
+    range.addEventListener('input', () => {
+        if (valEl) valEl.textContent = range.value;
+        const cat = clothingState.categories.find(c => c.key === clothingState.selectedKey);
+        if (!cat || cat.curDrawable < 0) return;
+        cat.curTexture = Number(range.value);
+
+        // Prefer collection path when we know stable identity
+        if (cat.collection !== undefined && cat.localDrawable !== undefined && cat.localDrawable >= 0) {
+            const payload = {
+                id: cat.id,
+                useCollection: true,
+                collection: cat.collection || '',
+                localDrawable: cat.localDrawable,
+                drawable: cat.localDrawable,
+                texture: cat.curTexture,
+            };
+            if (cat.isProp) post('prop', payload);
+            else post('component', payload);
+        } else if (cat.isProp) {
+            post('prop', { id: cat.id, drawable: cat.curDrawable, texture: cat.curTexture });
+        } else {
+            post('component', { id: cat.id, drawable: cat.curDrawable, texture: cat.curTexture });
+        }
+    });
+}
+
+function renderClothing(components, props, limits, currentClothing, clothingNames) {
+    clothingState.currentClothing = currentClothing || { components: {}, props: {} };
+    if (clothingNames) clothingState.clothingNames = clothingNames;
+    clothingState.categories = buildCategories(components, props, limits, clothingState.currentClothing);
+
+    // Prefer Top/Jacket as default selection if present
+    if (!clothingState.selectedKey || !clothingState.categories.find(c => c.key === clothingState.selectedKey)) {
+        const jacket = clothingState.categories.find(c => c.id === 11 && !c.isProp);
+        clothingState.selectedKey = jacket ? jacket.key : (clothingState.categories[0] && clothingState.categories[0].key);
+    }
+
+    bindTextureBar();
+    renderCategoryList();
+    renderItemList();
 }
 
 function renderPresets(presets) {
     const container = document.getElementById('preset-list');
     if (!container) return;
-
     container.innerHTML = '';
 
     if (!presets || presets.length === 0) {
-        container.innerHTML = '<p style="opacity:0.5;">No presets defined yet. Use /saveoutfit</p>';
+        container.innerHTML = `
+            <div class="preset-empty">
+                No presets defined yet.<br>
+                Staff can use <strong>/saveoutfit name</strong> while wearing an outfit.
+            </div>`;
         return;
     }
 
     presets.forEach(name => {
-        const btn = document.createElement('button');
-        btn.className = 'footer-btn';
-        btn.textContent = name;
-        btn.addEventListener('click', () => post('applyPreset', { name }));
-        container.appendChild(btn);
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'preset-card';
+        card.dataset.name = name;
+        card.innerHTML = `
+            <span class="preset-icon">👔</span>
+            <span class="preset-info">
+                <div class="preset-name">${name}</div>
+                <div class="preset-status">Click to equip</div>
+            </span>
+        `;
+        card.addEventListener('click', async () => {
+            // Instant visual feedback
+            container.querySelectorAll('.preset-card').forEach(c => {
+                c.classList.remove('applying', 'equipped');
+                const st = c.querySelector('.preset-status');
+                if (st) st.textContent = 'Click to equip';
+            });
+            card.classList.add('applying');
+            const status = card.querySelector('.preset-status');
+            if (status) status.textContent = 'Applying…';
+
+            const res = await post('applyPreset', { name });
+
+            card.classList.remove('applying');
+            if (res && !res.error) {
+                card.classList.add('equipped');
+                if (status) status.textContent = 'Equipped';
+                // Refresh clothing UI from server response
+                if (res.clothing) {
+                    const data = lastOpenData || {};
+                    renderClothing(
+                        data.clothingComponents || [],
+                        data.clothingProps || [],
+                        data.clothingLimits || { components: {}, props: {} },
+                        res.clothing,
+                        data.clothingNames || clothingState.clothingNames
+                    );
+                }
+            } else {
+                if (status) status.textContent = 'Failed — try again';
+            }
+        });
+        container.appendChild(card);
     });
 }
 
@@ -449,8 +821,17 @@ window.addEventListener('message', event => {
         lastOpenData = data;
         app.classList.remove('hidden');
 
-        // Locker mode = only Clothing + Presets tabs
+        const panel = document.getElementById('panel');
+        const panelTitle = document.getElementById('panel-title');
+
+        // Locker mode = only Clothing + Presets tabs, wider panel
         if (data.mode === 'locker') {
+            if (panel) panel.classList.add('locker-mode');
+            if (panelTitle) {
+                const factionLabel = (data.faction && lastOpenData.faction) ? String(data.faction).toUpperCase() : 'LOCKER';
+                panelTitle.textContent = factionLabel + ' LOCKER';
+            }
+
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 const tab = btn.dataset.tab;
                 if (tab !== 'clothing' && tab !== 'presets') {
@@ -469,24 +850,26 @@ window.addEventListener('message', event => {
             }
             post('setCamFocus', { focus: 'body' });
 
-            // Hide randomize in locker mode
             if (randomizeBtn) randomizeBtn.style.display = 'none';
         } else {
+            if (panel) panel.classList.remove('locker-mode');
+            if (panelTitle) panelTitle.textContent = 'CHARACTERISATION';
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.style.display = '';
             });
-            // Show randomize only in characterisation
             if (randomizeBtn) randomizeBtn.style.display = '';
         }
 
         renderFaceFeatures(data.faceFeatures || {});
         renderOverlays(data.overlays || []);
 
+        clothingState.clothingNames = data.clothingNames || { components: {}, props: {} };
         renderClothing(
             data.clothingComponents || [],
             data.clothingProps || [],
             data.clothingLimits || { components: {}, props: {} },
-            data.currentClothing || { components: {}, props: {} }
+            data.currentClothing || { components: {}, props: {} },
+            data.clothingNames
         );
         renderPresets(data.presets || []);
 
