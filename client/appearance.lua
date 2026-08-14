@@ -378,10 +378,22 @@ end
 function RandomizeAppearance(ped)
     ped = ped or PlayerPedId()
 
+    local isFemale = IsPedModel(ped, Config.Models.female)
+    -- fallback if model hash check fails
+    if not isFemale then
+        isFemale = GetEntityModel(ped) == Config.Models.female
+    end
+
+    -------------------------------------------------
+    -- Head blend (parents + skin)
+    -------------------------------------------------
     local shapeFirst  = math.random(0, Config.MaxParentID)
     local shapeSecond = math.random(0, Config.MaxParentID)
     local skinFirst   = math.random(0, Config.MaxParentID)
     local skinSecond  = math.random(0, Config.MaxParentID)
+
+    -- Bias skin mix a bit more toward mid values so pure white is less common
+    local skinMix = 0.25 + math.random() * 0.5   -- 0.25–0.75
 
     ApplyHeadBlend(ped, {
         shapeFirst  = shapeFirst,
@@ -390,25 +402,59 @@ function RandomizeAppearance(ped)
         skinFirst   = skinFirst,
         skinSecond  = skinSecond,
         skinThird   = 0,
-        shapeMix    = math.random() * 0.9 + 0.05,
-        skinMix     = math.random() * 0.9 + 0.05,
+        shapeMix    = math.random() * 0.85 + 0.1,
+        skinMix     = skinMix,
         thirdMix    = 0.0
     })
 
+    -------------------------------------------------
+    -- Face features (gender-biased)
+    -------------------------------------------------
     for i = 0, 19 do
-        local value = ((math.random() * 2.0) - 1.0) * 0.7
+        local value
+        if isFemale then
+            -- Softer / more feminine bias
+            if i == 13 or i == 14 or i == 15 or i == 16 or i == 17 then -- jaw / chin
+                value = (math.random() * 1.2) - 0.9          -- prefer narrower/softer
+            elseif i == 0 or i == 1 or i == 2 then            -- nose
+                value = (math.random() * 1.4) - 0.8
+            else
+                value = ((math.random() * 2.0) - 1.0) * 0.55
+            end
+        else
+            -- Male: allow stronger masculine features
+            if i == 13 or i == 14 or i == 15 or i == 16 or i == 17 then
+                value = (math.random() * 1.4) - 0.3          -- prefer wider/stronger jaw
+            else
+                value = ((math.random() * 2.0) - 1.0) * 0.7
+            end
+        end
         ApplyFaceFeature(ped, i, value)
     end
 
-    ApplyHair(ped, math.random(0, 73), math.random(0, 63), math.random(0, 63))
+    -------------------------------------------------
+    -- Hair (gender-aware ranges)
+    -------------------------------------------------
+    local maxHair = GetNumberOfPedDrawableVariations(ped, 2) - 1        -- adjust if you have more hairstyles
+    local hairStyle = math.random(0, maxHair)
+    ApplyHair(ped, hairStyle, math.random(0, 63), math.random(0, 63))
+
     ApplyEyeColor(ped, math.random(0, 31))
 
-    -- Do not randomize cosmetic makeup overlays — always clear them
+    -------------------------------------------------
+    -- Overlays
+    -------------------------------------------------
     local skipRandomOverlay = {
-        makeup = true,
-        blush = true,
+        makeup   = true,   -- keep cleared (or remove for females if you want light makeup)
+        blush    = true,
         lipstick = true,
     }
+
+    -- Extra skips for females
+    if isFemale then
+        skipRandomOverlay.beard     = true
+        skipRandomOverlay.chesthair = true
+    end
 
     for _, o in ipairs(Config.HeadOverlays) do
         if skipRandomOverlay[o.key] then
@@ -416,7 +462,15 @@ function RandomizeAppearance(ped)
         else
             local max = GetOverlayMax(o.id)
             local index = math.random(-1, max)
-            local opacity = index >= 0 and (math.random() * 0.7 + 0.3) or 0.0
+
+            -- Females: lower chance of heavy blemishes/ageing
+            if isFemale and (o.key == 'ageing' or o.key == 'blemishes' or o.key == 'sundamage') then
+                if math.random() < 0.65 then
+                    index = -1
+                end
+            end
+
+            local opacity = index >= 0 and (math.random() * 0.65 + 0.25) or 0.0
 
             local colorType, colorIndex, secondColorIndex = nil, nil, nil
             if o.hasColor and index >= 0 then
