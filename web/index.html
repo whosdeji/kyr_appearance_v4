@@ -136,6 +136,19 @@
         <span>Loading asset…</span>
     </div>
 
+    <!-- Confirm dialog (load / delete outfit) -->
+    <div id="confirm-modal" class="hidden">
+        <div class="confirm-backdrop"></div>
+        <div class="confirm-box">
+            <div class="confirm-title" id="confirm-title">Are you sure?</div>
+            <div class="confirm-message" id="confirm-message"></div>
+            <div class="confirm-actions">
+                <button type="button" id="confirm-cancel" class="confirm-btn cancel">Cancel</button>
+                <button type="button" id="confirm-ok" class="confirm-btn ok">Confirm</button>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script src="script.js"></script>

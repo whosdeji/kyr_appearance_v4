@@ -23,6 +23,40 @@ function showLoading(ms = 900) {
     }, ms);
 }
 
+/** Promise-based confirm dialog. Resolves true/false. */
+function askConfirm({ title = 'Are you sure?', message = '', danger = false } = {}) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('confirm-modal');
+        const titleEl = document.getElementById('confirm-title');
+        const msgEl = document.getElementById('confirm-message');
+        const okBtn = document.getElementById('confirm-ok');
+        const cancelBtn = document.getElementById('confirm-cancel');
+        const backdrop = modal && modal.querySelector('.confirm-backdrop');
+        if (!modal || !okBtn || !cancelBtn) {
+            resolve(window.confirm(message || title));
+            return;
+        }
+
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+        okBtn.classList.toggle('danger', !!danger);
+        okBtn.textContent = danger ? 'Delete' : 'Confirm';
+        modal.classList.remove('hidden');
+
+        const cleanup = (result) => {
+            modal.classList.add('hidden');
+            okBtn.onclick = null;
+            cancelBtn.onclick = null;
+            if (backdrop) backdrop.onclick = null;
+            resolve(result);
+        };
+
+        okBtn.onclick = () => cleanup(true);
+        cancelBtn.onclick = () => cleanup(false);
+        if (backdrop) backdrop.onclick = () => cleanup(false);
+    });
+}
+
 /** After equipping a preset (or any bulk change), sync Clothing + Advanced UI from live ped. */
 async function refreshClothingUI(fromResponse) {
     let clothing = fromResponse && fromResponse.clothing;
@@ -1047,6 +1081,13 @@ function addPresetCard(container, preset) {
 
     card.addEventListener('click', async (e) => {
         if (e.target && e.target.classList.contains('preset-delete')) return;
+
+        const ok = await askConfirm({
+            title: 'Load outfit?',
+            message: `Equip “${preset.name}”? Your current clothing will be replaced.`,
+        });
+        if (!ok) return;
+
         container.querySelectorAll('.preset-card').forEach(c => {
             c.classList.remove('equipped');
             const st = c.querySelector('.preset-status');
@@ -1062,7 +1103,14 @@ function addPresetCard(container, preset) {
             source: preset.source,
             outfit: preset.outfit || null,
         });
-        // Always refresh Clothing + Advanced from server response or live ped state
+
+        if (res && res.error === 'sex_mismatch') {
+            if (status) status.textContent = 'Wrong sex';
+            card.classList.remove('equipped');
+            showShareStatus('This outfit is for a different sex character.', true);
+            return;
+        }
+
         await refreshClothingUI(res);
     });
 
@@ -1070,9 +1118,15 @@ function addPresetCard(container, preset) {
     if (del) {
         del.addEventListener('click', async (e) => {
             e.stopPropagation();
+            const ok = await askConfirm({
+                title: 'Delete outfit?',
+                message: `Permanently delete “${preset.name}”? This cannot be undone.`,
+                danger: true,
+            });
+            if (!ok) return;
+
             const res = await post('deletePlayerPreset', { name: preset.name });
             if (res && res.ok) {
-                // refresh player list
                 const list = await post('getPlayerPresets', {});
                 lastOpenData.playerPresets = (list && list.presets) || [];
                 renderPresets(lastOpenData.presets || [], lastOpenData.playerPresets);
@@ -1125,6 +1179,13 @@ function bindShareCodes() {
             if (input) input.focus();
             return;
         }
+
+        const ok = await askConfirm({
+            title: 'Use share code?',
+            message: `Apply outfit from code ${code.toUpperCase()}? Your current clothing will be replaced.`,
+        });
+        if (!ok) return;
+
         useBtn.disabled = true;
         showShareStatus('Applying…');
         const res = await post('redeemShareCode', { code });
@@ -1134,7 +1195,9 @@ function bindShareCodes() {
             await refreshClothingUI(res);
         } else {
             const err = (res && res.error) || 'failed';
-            const msg = err === 'not_found' ? 'Code not found' : 'Could not apply code';
+            let msg = 'Could not apply code';
+            if (err === 'not_found') msg = 'Code not found';
+            else if (err === 'sex_mismatch') msg = 'This code is for a different sex character and cannot be used.';
             showShareStatus(msg, true);
         }
     };

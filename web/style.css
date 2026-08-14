@@ -647,22 +647,33 @@ html, body {
 
 .preset-card .preset-delete {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 24px;
-    height: 24px;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
     border-radius: 4px;
     border: 1px solid #2d333a;
-    background: rgba(0,0,0,0.35);
+    background: rgba(0, 0, 0, 0.45);
     color: #a0a8b0;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 18px;
     line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    z-index: 2;
 }
 
 .preset-card .preset-delete:hover {
     color: #ff6b6b;
     border-color: #ff6b6b;
+    background: rgba(255, 80, 80, 0.15);
+}
+
+.preset-card .preset-info {
+    padding-right: 36px;
 }
 
 .preset-source {
@@ -775,4 +786,86 @@ html, body {
 
 @keyframes kyr-spin {
     to { transform: rotate(360deg); }
+}
+
+/* -------------------- confirm modal -------------------- */
+#confirm-modal {
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#confirm-modal.hidden {
+    display: none !important;
+}
+
+.confirm-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+.confirm-box {
+    position: relative;
+    width: min(360px, 90%);
+    background: rgba(12, 15, 18, 0.98);
+    border: 1px solid #2d333a;
+    border-radius: 8px;
+    padding: 22px 24px 18px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+}
+
+.confirm-title {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #9fe870;
+    margin-bottom: 10px;
+}
+
+.confirm-message {
+    font-size: 13px;
+    color: #b7bfc7;
+    line-height: 1.45;
+    margin-bottom: 18px;
+}
+
+.confirm-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.confirm-btn {
+    min-width: 90px;
+    padding: 10px 14px;
+    border-radius: 4px;
+    border: 1px solid #3a4048;
+    background: transparent;
+    color: #b7bfc7;
+    font-size: 12px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.confirm-btn.cancel:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.confirm-btn.ok {
+    background: #9fe870;
+    border-color: #9fe870;
+    color: #0f1216;
+    font-weight: 700;
+}
+
+.confirm-btn.ok.danger {
+    background: #ff6b6b;
+    border-color: #ff6b6b;
+    color: #0f1216;
 }
