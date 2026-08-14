@@ -12,6 +12,17 @@ function post(endpoint, data) {
     }).catch(() => ({}));
 }
 
+/** Show NUI loading indicator (covers native spinner hidden by side panel). */
+function showLoading(ms = 900) {
+    const el = document.getElementById('loading-indicator');
+    if (!el) return;
+    el.classList.remove('hidden');
+    clearTimeout(window._kyrLoadingTimer);
+    window._kyrLoadingTimer = setTimeout(() => {
+        el.classList.add('hidden');
+    }, ms);
+}
+
 /** After equipping a preset (or any bulk change), sync Clothing + Advanced UI from live ped. */
 async function refreshClothingUI(fromResponse) {
     let clothing = fromResponse && fromResponse.clothing;
@@ -778,6 +789,7 @@ async function equipCatalogItem(cat, item, texture) {
         texture: cat.curTexture,
     };
 
+    showLoading();
     const res = cat.isProp ? await post('prop', payload) : await post('component', payload);
     if (res && res.clothing) {
         clothingState.currentClothing = res.clothing;
@@ -799,6 +811,7 @@ async function equipGlobalItem(cat, drawable, texture) {
     renderCategoryList();
     renderItemList();
 
+    showLoading();
     const res = cat.isProp
         ? await post('prop', { id: cat.id, drawable, texture: cat.curTexture })
         : await post('component', { id: cat.id, drawable, texture: cat.curTexture });
@@ -825,6 +838,7 @@ function bindTextureBar() {
         if (!cat || cat.curDrawable < 0) return;
         cat.curTexture = Number(range.value);
 
+        showLoading(500);
         // Prefer collection path when we know stable identity
         if (cat.collection !== undefined && cat.localDrawable !== undefined && cat.localDrawable >= 0) {
             const payload = {
@@ -893,6 +907,7 @@ function renderAdvancedClothing(components, props, limits, currentClothing) {
 
         const drawableRow = makeSliderRow('Drawable', 0, maxDrawable, 1, state.drawable, (value) => {
             state.drawable = Number(value);
+            showLoading(500);
             post('component', { id: c.id, drawable: state.drawable, texture: state.texture }).then(res => {
                 if (res && res.clothing) clothingState.currentClothing = res.clothing;
             });
@@ -901,6 +916,7 @@ function renderAdvancedClothing(components, props, limits, currentClothing) {
 
         const textureRow = makeSliderRow('Texture', 0, 25, 1, state.texture, (value) => {
             state.texture = Number(value);
+            showLoading(500);
             post('component', { id: c.id, drawable: state.drawable, texture: state.texture }).then(res => {
                 if (res && res.clothing) clothingState.currentClothing = res.clothing;
             });
@@ -949,6 +965,7 @@ function renderAdvancedClothing(components, props, limits, currentClothing) {
 
         const drawableRow = makeSliderRow('Drawable (-1 = none)', -1, maxDrawable, 1, state.drawable, (value) => {
             state.drawable = Number(value);
+            showLoading(500);
             post('prop', { id: p.id, drawable: state.drawable, texture: state.texture }).then(res => {
                 if (res && res.clothing) clothingState.currentClothing = res.clothing;
             });
@@ -957,6 +974,7 @@ function renderAdvancedClothing(components, props, limits, currentClothing) {
 
         const textureRow = makeSliderRow('Texture', 0, 25, 1, state.texture, (value) => {
             state.texture = Number(value);
+            showLoading(500);
             post('prop', { id: p.id, drawable: state.drawable, texture: state.texture }).then(res => {
                 if (res && res.clothing) clothingState.currentClothing = res.clothing;
             });
@@ -1038,6 +1056,7 @@ function addPresetCard(container, preset) {
         const status = card.querySelector('.preset-status');
         if (status) status.textContent = 'Equipped';
 
+        showLoading(1200);
         const res = await post('applyPreset', {
             name: preset.name,
             source: preset.source,

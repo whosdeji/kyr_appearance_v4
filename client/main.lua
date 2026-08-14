@@ -734,7 +734,14 @@ RegisterNUICallback('cancel', function(data, cb)
     end
 
     if previousAppearance then
-        ApplyFullAppearance(PlayerPedId(), previousAppearance)
+        local ped = PlayerPedId()
+        ApplyFullAppearance(ped, previousAppearance)
+        -- Re-apply head blend so skin tone doesn't drift after cancel
+        if previousAppearance.headBlend then
+            ApplyHeadBlend(ped, previousAppearance.headBlend)
+            Wait(50)
+            ApplyHeadBlend(ped, previousAppearance.headBlend)
+        end
     end
 
     closeAppearanceMenu()
