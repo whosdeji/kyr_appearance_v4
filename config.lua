@@ -256,7 +256,7 @@ Config.Factions = {
                         [0] = { label = 'US Army Legs 0', sex = 'male' }, [1] = { label = 'US Army Legs 1', sex = 'male' }, [2] = { label = 'US Army Legs 2', sex = 'male' },
                     },
                     ['r4cryeg3'] = {
-                        [0] = { label = '', sex = 'male' }, [1] = { label = '', sex = 'male' },
+                        [0] = { label = 'Crye Precision G3 Legs 0', sex = 'male' }, [1] = { label = 'Crye Precision G3 Legs 1', sex = 'male' },
                     },
                 },
                 [5] = { -- Bag / Parachute
@@ -265,7 +265,7 @@ Config.Factions = {
                         [4] = { label = 'US Army Bag 4', sex = 'male' }, [5] = { label = 'US Army Bag 5', sex = 'male' }, [6] = { label = 'US Army Bag 6', sex = 'male' },
                     },
                     ['r4cryeg3'] = {
-                        [0] = { label = '', sex = 'male' }, [1] = { label = '', sex = 'male' }, [2] = { label = '', sex = 'male' }, [3] = { label = '', sex = 'male' }, [4] = { label = '', sex = 'male' },
+                        [0] = { label = 'Crye Precision G3 Bag 0', sex = 'male' }, [1] = { label = 'Crye Precision G3 Bag 1', sex = 'male' }, [2] = { label = 'Crye Precision G3 Bag 2', sex = 'male' }, [3] = { label = 'Crye Precision G3 Bag 3', sex = 'male' }, [4] = { label = 'Crye Precision G3 Bag 4', sex = 'male' },
                     },
                 },
                 [6] = { -- Shoes
@@ -273,7 +273,7 @@ Config.Factions = {
                         [0] = { label = 'US Army Shoes 0', sex = 'male' },
                     },
                     ['r4cryeg3'] = {
-                        [0] = { label = '', sex = 'male' }, 
+                        [0] = { label = 'Crye Precision G3 Shoes 0', sex = 'male' }, 
                     },
                 },
                 [7] = { -- Accessories
@@ -297,7 +297,7 @@ Config.Factions = {
                         [4] = { label = 'US Army Vest 4', sex = 'male' },
                     },
                     ['r4cryeg3'] = {
-                        [0] = { label = '', sex = 'male' },
+                        [0] = { label = 'Crye Precision G3 Armor 0', sex = 'male' },
                     },
                 },
                 [10] = { -- Decals
@@ -315,7 +315,7 @@ Config.Factions = {
                         [40] = { label = 'US Army Decal 40', sex = 'male' },
                     },
                     ['r4cryeg3'] = {
-                        [0] = { label = '', sex = 'male' }, [1] = { label = '', sex = 'male' }, [2] = { label = '', sex = 'male' },
+                        [0] = { label = 'Crye Precision G3 Hat 0', sex = 'male' }, [1] = { label = 'Crye Precision G3 Hat 1', sex = 'male' }, [2] = { label = 'Crye Precision G3 Hat 2', sex = 'male' },
                     },
                 },
                 [11] = { -- Top / Jacket
@@ -325,7 +325,7 @@ Config.Factions = {
                         [8] = { label = '[ACU] OCP COMBAT SHIRT | ZIPPED', sex = 'male' }, [9] = { label = '[IHWCU] OCP COMBAT SHIRT | UNZIPPED', sex = 'male' },
                     },
                     ['r4cryeg3'] = {
-                        [0] = { label = '', sex = 'male' }, [1] = { label = '', sex = 'male' },
+                        [0] = { label = 'Crye Precision G3 Jacket 0', sex = 'male' }, [1] = { label = 'Crye Precision G3 Jacket 1', sex = 'male' },
                     },
                 },
             },
@@ -339,7 +339,7 @@ Config.Factions = {
                         [16] = { label = 'US Army Hat 16', sex = 'male' },
                     },
                     ['r4cryeg3'] = {
-                        [0] = { label = '', sex = 'male' }, [1] = { label = '', sex = 'male' }, 
+                        [0] = { label = 'Crye Precision G3 Hat 0', sex = 'male' }, [1] = { label = 'Crye Precision G3 Hat 1', sex = 'male' },
                     },
                 },
                 [1] = { -- Glasses
@@ -348,7 +348,7 @@ Config.Factions = {
                         [4] = { label = 'US Army Glasses 4', sex = 'male' }, [5] = { label = 'US Army Glasses 5', sex = 'male' }, [6] = { label = 'US Army Glasses 6', sex = 'male' },
                     },
                     ['r4cryeg3'] = {
-                        [0] = { label = '', sex = 'male' }, [1] = { label = '', sex = 'male' }, [2] = { label = '', sex = 'male' }, [3] = { label = '', sex = 'male' }, [4] = { label = '', sex = 'male' },
+                        [0] = { label = 'Crye Precision G3 Glasses 0', sex = 'male' }, [1] = { label = 'Crye Precision G3 Glasses 1', sex = 'male' }, [2] = { label = 'Crye Precision G3 Glasses 2', sex = 'male' }, [3] = { label = 'Crye Precision G3 Glasses 3', sex = 'male' }, [4] = { label = 'Crye Precision G3 Glasses 4', sex = 'male' },
                     },
                 },
                 [2] = { -- Ears
@@ -357,7 +357,7 @@ Config.Factions = {
                         [4] = { label = 'US Army Ears 4', sex = 'male' }, [5] = { label = 'US Army Ears 5', sex = 'male' }, [6] = { label = 'US Army Ears 6', sex = 'male' },
                     },
                     ['r4cryeg3'] = {
-                        [0] = { label = '', sex = 'male' }, [1] = { label = '', sex = 'male' }, 
+                        [0] = { label = 'Crye Precision G3 Ears 0', sex = 'male' }, [1] = { label = 'Crye Precision G3 Ears 1', sex = 'male' }, 
                     },
                 },
             },
