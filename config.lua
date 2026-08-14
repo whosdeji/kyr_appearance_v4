@@ -255,16 +255,25 @@ Config.Factions = {
                     ['r4usarmyv3'] = {
                         [0] = { label = 'US Army Legs 0', sex = 'male' }, [1] = { label = 'US Army Legs 1', sex = 'male' }, [2] = { label = 'US Army Legs 2', sex = 'male' },
                     },
+                    ['r4cryeg3'] = {
+                        [0] = { label = '', sex = 'male' }, [1] = { label = '', sex = 'male' },
+                    },
                 },
                 [5] = { -- Bag / Parachute
                     ['r4usarmyv3'] = {
                         [0] = { label = 'US Army Bag 0', sex = 'male' }, [1] = { label = 'US Army Bag 1', sex = 'male' }, [2] = { label = 'US Army Bag 2', sex = 'male' }, [3] = { label = 'US Army Bag 3', sex = 'male' },
                         [4] = { label = 'US Army Bag 4', sex = 'male' }, [5] = { label = 'US Army Bag 5', sex = 'male' }, [6] = { label = 'US Army Bag 6', sex = 'male' },
                     },
+                    ['r4cryeg3'] = {
+                        [0] = { label = '', sex = 'male' }, [1] = { label = '', sex = 'male' }, [2] = { label = '', sex = 'male' }, [3] = { label = '', sex = 'male' }, [4] = { label = '', sex = 'male' },
+                    },
                 },
                 [6] = { -- Shoes
                     ['r4usarmyv3'] = {
                         [0] = { label = 'US Army Shoes 0', sex = 'male' },
+                    },
+                    ['r4cryeg3'] = {
+                        [0] = { label = '', sex = 'male' }, 
                     },
                 },
                 [7] = { -- Accessories
@@ -287,6 +296,9 @@ Config.Factions = {
                         [0] = { label = 'US Army Vest 0', sex = 'male' }, [1] = { label = 'US Army Vest 1', sex = 'male' }, [2] = { label = 'US Army Vest 2', sex = 'male' }, [3] = { label = 'US Army Vest 3', sex = 'male' },
                         [4] = { label = 'US Army Vest 4', sex = 'male' },
                     },
+                    ['r4cryeg3'] = {
+                        [0] = { label = '', sex = 'male' },
+                    },
                 },
                 [10] = { -- Decals
                     ['r4usarmyv3'] = {
@@ -302,12 +314,18 @@ Config.Factions = {
                         [36] = { label = 'US Army Decal 36', sex = 'male' }, [37] = { label = 'US Army Decal 37', sex = 'male' }, [38] = { label = 'US Army Decal 38', sex = 'male' }, [39] = { label = 'US Army Decal 39', sex = 'male' },
                         [40] = { label = 'US Army Decal 40', sex = 'male' },
                     },
+                    ['r4cryeg3'] = {
+                        [0] = { label = '', sex = 'male' }, [1] = { label = '', sex = 'male' }, [2] = { label = '', sex = 'male' },
+                    },
                 },
                 [11] = { -- Top / Jacket
                     ['r4usarmyv3'] = {
                         [0] = { label = '[ACU] OCP COAT | UNTUCKED', sex = 'male' }, [1] = { label = '[ACU] OCP COAT | UNTUCKED | SLEEVES', sex = 'male' }, [2] = { label = '[ACU] OCP COAT | TUCKED', sex = 'male' }, [3] = { label = '[ACU] OCP COAT | TUCKED | SLEEVES', sex = 'male' },
                         [4] = { label = '[IHWCU] OCP COAT | UNTUCKED', sex = 'male' }, [5] = { label = '[IHWCU] OCP COAT | UNTUCKED | SLEEVES', sex = 'male' }, [6] = { label = '[IHWCU] OCP COAT | TUCKED', sex = 'male' }, [7] = { label = '[IHWCU] OCP COAT | TUCKED | SLEEVES', sex = 'male' },
                         [8] = { label = '[ACU] OCP COMBAT SHIRT | ZIPPED', sex = 'male' }, [9] = { label = '[IHWCU] OCP COMBAT SHIRT | UNZIPPED', sex = 'male' },
+                    },
+                    ['r4cryeg3'] = {
+                        [0] = { label = '', sex = 'male' }, [1] = { label = '', sex = 'male' },
                     },
                 },
             },
@@ -320,17 +338,26 @@ Config.Factions = {
                         [12] = { label = 'US Army Hat 12', sex = 'male' }, [13] = { label = 'US Army Hat 13', sex = 'male' }, [14] = { label = 'US Army Hat 14', sex = 'male' }, [15] = { label = 'US Army Hat 15', sex = 'male' },
                         [16] = { label = 'US Army Hat 16', sex = 'male' },
                     },
+                    ['r4cryeg3'] = {
+                        [0] = { label = '', sex = 'male' }, [1] = { label = '', sex = 'male' }, 
+                    },
                 },
                 [1] = { -- Glasses
                     ['r4usarmyv3'] = {
                         [0] = { label = 'US Army Glasses 0', sex = 'male' }, [1] = { label = 'US Army Glasses 1', sex = 'male' }, [2] = { label = 'US Army Glasses 2', sex = 'male' }, [3] = { label = 'US Army Glasses 3', sex = 'male' },
                         [4] = { label = 'US Army Glasses 4', sex = 'male' }, [5] = { label = 'US Army Glasses 5', sex = 'male' }, [6] = { label = 'US Army Glasses 6', sex = 'male' },
                     },
+                    ['r4cryeg3'] = {
+                        [0] = { label = '', sex = 'male' }, [1] = { label = '', sex = 'male' }, [2] = { label = '', sex = 'male' }, [3] = { label = '', sex = 'male' }, [4] = { label = '', sex = 'male' },
+                    },
                 },
                 [2] = { -- Ears
                     ['r4usarmyv3'] = {
                         [0] = { label = 'US Army Ears 0', sex = 'male' }, [1] = { label = 'US Army Ears 1', sex = 'male' }, [2] = { label = 'US Army Ears 2', sex = 'male' }, [3] = { label = 'US Army Ears 3', sex = 'male' },
                         [4] = { label = 'US Army Ears 4', sex = 'male' }, [5] = { label = 'US Army Ears 5', sex = 'male' }, [6] = { label = 'US Army Ears 6', sex = 'male' },
+                    },
+                    ['r4cryeg3'] = {
+                        [0] = { label = '', sex = 'male' }, [1] = { label = '', sex = 'male' }, 
                     },
                 },
             },
